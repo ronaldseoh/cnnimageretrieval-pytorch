@@ -39,7 +39,9 @@ class TuplesDataset(data.Dataset):
             ie new q-p pairs are picked and negative images are remined
     """
 
-    def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader):
+    def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
+                 save_embeds=False, dense_refresh_interval=-1,
+                 dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1):
 
         if not (mode == 'train' or mode == 'val'):
             raise(RuntimeError("MODE should be either train or val, passed as string"))
@@ -212,6 +214,8 @@ class TuplesDataset(data.Dataset):
                 if (i+1) % self.print_freq == 0 or (i+1) == len(idxs2images):
                     print('\r>>>> {}/{} done...'.format(i+1, len(idxs2images)), end='')
             print('')
+
+            # Serialize
 
             print('>> Searching for hard negatives...')
             # compute dot product scores and ranks on GPU

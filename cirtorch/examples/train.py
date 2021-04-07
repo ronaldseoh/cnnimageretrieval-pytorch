@@ -121,6 +121,25 @@ parser.add_argument('--print-freq', default=10, type=int,
                     metavar='N', help='print frequency (default: 10)')
 parser.add_argument('--resume', default='', type=str, metavar='FILENAME',
                     help='name of the latest checkpoint (default: None)')
+                    
+# Efficient embedding refresh
+parser.add_argument('--save_embeds', action="store_true")
+
+parser.add_argument('--dense_refresh_interval',
+                    help='how often should we rebuild dense embeddings, in terms of training steps?',
+                    default=-1, type=int)
+                    
+parser.add_argument('--dense_refresh_batch_and_nearby',
+                    help='refresh embeddings of the in-batch queries and their neighbors. 0 refreshes only the in-batch queries',
+                    default=-1, type=int)
+
+parser.add_argument('--dense_refresh_batch_multi_hop',
+                    help='refresh embeddings of neighbors up to specified number of hops.',
+                    default=-1, type=int)
+                    
+parser.add_argument('--dense_refresh_batch_random',
+                    help='refresh embeddings of randomly selected non-batch queries.',
+                    default=-1, type=int)
 
 min_loss = float('inf')
 
@@ -267,8 +286,14 @@ def main():
         nnum=args.neg_num,
         qsize=args.query_size,
         poolsize=args.pool_size,
-        transform=transform
+        transform=transform,
+        save_embeds=args.save_embeds,
+        dense_refresh_interval=args.dense_refresh_interval,
+        dense_refresh_batch_and_nearby=args.dense_refresh_batch_and_nearby,
+        dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,
+        dense_refresh_batch_random=args.dense_refresh_batch_random
     )
+
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True, sampler=None,

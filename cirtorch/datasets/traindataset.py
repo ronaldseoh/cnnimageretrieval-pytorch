@@ -178,9 +178,10 @@ class TuplesDataset(data.Dataset):
             
             # Serialize the query vectors
             if save_embeds:
-                print("Epoch {} Step {} dense embeddings serialization".format(save_embeds_epoch, save_embeds_step))
+                print("Epoch {} Step {} query embeddings serialization".format(save_embeds_epoch, save_embeds_step))
                 
-                torch.save(save_embeds_path, qvecs)
+                torch.save(
+                    qvecs, os.path.join(save_embeds_path, '{}_queries.pt'.format(save_embeds_step)))
             
             return qvecs
             
@@ -211,9 +212,10 @@ class TuplesDataset(data.Dataset):
             
             # Serialize the query vectors
             if save_embeds:
-                print("Epoch {} Step {} dense embeddings serialization".format(save_embeds_epoch, save_embeds_step))
+                print("Epoch {} Step {} pool embeddings serialization".format(save_embeds_epoch, save_embeds_step))
                 
-                torch.save(save_embeds_path, poolvecs)
+                torch.save(
+                    poolvecs, os.path.join(save_embeds_path, '{}_pools.pt'.format(save_embeds_step)))
             
             return poolvecs
 

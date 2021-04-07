@@ -326,8 +326,6 @@ def main():
         torch.manual_seed(epoch)
         torch.cuda.manual_seed_all(epoch)
 
-        # adjust learning rate for each epoch
-        scheduler.step()
         # # debug printing to check if everything ok
         # lr_feat = optimizer.param_groups[0]['lr']
         # lr_pool = optimizer.param_groups[1]['lr']
@@ -335,6 +333,9 @@ def main():
 
         # train for one epoch on train set
         loss = train(train_loader, model, criterion, optimizer, epoch)
+        
+        # adjust learning rate for each epoch
+        scheduler.step()
 
         # evaluate on validation set
         if args.val:
@@ -408,6 +409,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
             # print('>> Train: [{0}][{1}/{2}]\t'
             #       'Weight update performed'.format(
             #        epoch+1, i+1, len(train_loader)))
+                
 
         # measure elapsed time
         batch_time.update(time.time() - end)

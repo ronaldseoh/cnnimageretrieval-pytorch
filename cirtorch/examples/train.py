@@ -325,16 +325,16 @@ def main():
         torch.manual_seed(epoch)
         torch.cuda.manual_seed_all(epoch)
 
-        # # debug printing to check if everything ok
-        # lr_feat = optimizer.param_groups[0]['lr']
-        # lr_pool = optimizer.param_groups[1]['lr']
-        # print('>> Features lr: {:.2e}; Pooling lr: {:.2e}'.format(lr_feat, lr_pool))
-
         # train for one epoch on train set
         loss = train(train_loader, model, criterion, optimizer, epoch)
         
         # adjust learning rate for each epoch
         scheduler.step()
+
+        # # debug printing to check if everything ok
+        # lr_feat = optimizer.param_groups[0]['lr']
+        # lr_pool = optimizer.param_groups[1]['lr']
+        # print('>> Features lr: {:.2e}; Pooling lr: {:.2e}'.format(lr_feat, lr_pool))
 
         # evaluate on validation set
         if args.val:
@@ -363,8 +363,18 @@ def train(train_loader, model, criterion, optimizer, epoch):
     data_time = AverageMeter()
     losses = AverageMeter()
 
+    # Create a separate directory for embeddings serialization
+    if args.save_embeds:
+        save_embeds_dir = os.path.join(args.directory, 'epoch_{}'.format(epoch))
+        os.makedirs(save_embeds_dir, exist_ok=True)
+    else:
+        save_embeds_dir = ''
+
     # create tuples for training
-    avg_neg_distance = train_loader.dataset.create_epoch_tuples(model)
+    avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+        model,
+        save_embeds=args.save_embeds, save_embeds_epoch=epoch, save_embeds_step=-1,
+        save_embeds_path=save_embeds_dir)
 
     # switch to train mode
     model.train()
@@ -377,7 +387,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
     for i, (input, target) in enumerate(train_loader):
         # measure data loading time
         data_time.update(time.time() - end)
-
 
         nq = len(input) # number of training tuples
         ni = len(input[0]) # number of images per tuple
@@ -408,7 +417,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
             # print('>> Train: [{0}][{1}/{2}]\t'
             #       'Weight update performed'.format(
             #        epoch+1, i+1, len(train_loader)))
-                
+
+            if (i + 1) % args.dense_refresh_interval == 0:
+                avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+                    model,
+                    refresh_positive_pairs=False,
+                    refresh_negative_pairs=False,
+                    save_embeds=args.save_embeds, save_embeds_epoch=epoch, save_embeds_step=i,
+                    save_embeds_path=save_embeds_dir)
 
         # measure elapsed time
         batch_time.update(time.time() - end)

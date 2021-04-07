@@ -196,17 +196,17 @@ class TuplesDataset(data.Dataset):
             print('>> Extracting descriptors for negative pool...')
             # prepare negative pool data loader
             loader = torch.utils.data.DataLoader(
-                ImagesFromList(root='', images=[self.images[i] for i in idxs2images], imsize=self.imsize, transform=self.transform),
+                ImagesFromList(root='', images=[self.images[i] for i in self.idxs2images], imsize=self.imsize, transform=self.transform),
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
 
             # extract negative pool vectors
-            poolvecs = torch.zeros(net.meta['outputdim'], self.poolsize).cuda()
+            poolvecs = torch.zeros(net.meta['outputdim'], len(self.idxs2images)).cuda()
 
             for i, input in enumerate(loader):
                 poolvecs[:, i] = net(input.cuda()).data.squeeze()
-                if (i+1) % self.print_freq == 0 or (i+1) == self.poolsize:
-                    print('\r>>>> {}/{} done...'.format(i+1, self.poolsize), end='')
+                if (i+1) % self.print_freq == 0 or (i+1) == len(self.idxs2images):
+                    print('\r>>>> {}/{} done...'.format(i+1, len(self.idxs2images)), end='')
             print('')
             
             # Serialize the query vectors
@@ -218,6 +218,8 @@ class TuplesDataset(data.Dataset):
             return poolvecs
 
     def create_epoch_tuples(self, net,
+                            refresh_positive_pairs=True,
+                            refresh_negative_pairs=True,
                             save_embeds=False, save_embeds_epoch=-1, save_embeds_step=-1,
                             save_embeds_path=''):
 
@@ -230,9 +232,11 @@ class TuplesDataset(data.Dataset):
         ## ------------------------
 
         # draw qsize random queries for tuples
-        idxs2qpool = torch.randperm(len(self.qpool))[:self.qsize]
-        self.qidxs = [self.qpool[i] for i in idxs2qpool]
-        self.pidxs = [self.ppool[i] for i in idxs2qpool]
+        if refresh_positive_pairs:
+            self.idxs2qpool = torch.randperm(len(self.qpool))[:self.qsize]
+            
+            self.qidxs = [self.qpool[i] for i in self.idxs2qpool]
+            self.pidxs = [self.ppool[i] for i in self.idxs2qpool]
 
         ## ------------------------
         ## SELECTING NEGATIVE PAIRS
@@ -240,17 +244,18 @@ class TuplesDataset(data.Dataset):
 
         # if nnum = 0 create dummy nidxs
         # useful when only positives used for training
-        if self.nnum == 0:
-            self.nidxs = [[] for _ in range(len(self.qidxs))]
-            return 0
+        if refresh_negative_pairs:
+            if self.nnum == 0:
+                self.nidxs = [[] for _ in range(len(self.qidxs))]
+                return 0
 
-        # draw poolsize random images for pool of negatives images
-        idxs2images = torch.randperm(len(self.images))[:self.poolsize]
+            # draw poolsize random images for pool of negatives images
+            self.idxs2images = torch.randperm(len(self.images))[:self.poolsize]
 
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
             # extract query vectors
-            qvecs = self.rebuild_query_vectors(
+            qvecs = self.extract_query_vectors(
                 net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_path)
 
             # extract negative pool vectors
@@ -273,7 +278,7 @@ class TuplesDataset(data.Dataset):
                 nidxs = []
                 r = 0
                 while len(nidxs) < self.nnum:
-                    potential = idxs2images[ranks[r, q]]
+                    potential = self.idxs2images[ranks[r, q]]
                     # take at most one image from the same cluster
                     if not self.clusters[potential] in clusters:
                         nidxs.append(potential)

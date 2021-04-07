@@ -287,7 +287,6 @@ def main():
         qsize=args.query_size,
         poolsize=args.pool_size,
         transform=transform,
-        save_embeds=args.save_embeds,
         dense_refresh_interval=args.dense_refresh_interval,
         dense_refresh_batch_and_nearby=args.dense_refresh_batch_and_nearby,
         dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,

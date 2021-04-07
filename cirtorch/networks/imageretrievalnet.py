@@ -313,8 +313,9 @@ def extract_ms(net, input, ms, msp):
     for s in ms: 
         if s == 1:
             input_t = input.clone()
-        else:    
-            input_t = nn.functional.interpolate(input, scale_factor=s, mode='bilinear', align_corners=False)
+        else:
+            # Added recompute_scale_factor=True, following the changes in default behavior in PyTorch 1.6.0
+            input_t = nn.functional.interpolate(input, scale_factor=s, mode='bilinear', align_corners=False, recompute_scale_factor=True)
         v += net(input_t).pow(msp).cpu().data.squeeze()
         
     v /= len(ms)

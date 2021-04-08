@@ -153,7 +153,8 @@ class TuplesDataset(data.Dataset):
         return fmt_str
         
     def extract_query_vectors(self, net,
-                              save_embeds=False, save_embeds_epoch=-1, save_embeds_step=-1,
+                              save_embeds=False,
+                              save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                               save_embeds_path=''):
         # prepare network
         net.cuda()
@@ -178,15 +179,22 @@ class TuplesDataset(data.Dataset):
             
             # Serialize the query vectors
             if save_embeds:
-                print("Epoch {} Step {} query embeddings serialization".format(save_embeds_epoch, save_embeds_step))
-                
+                print(
+                    ">>>>> Epoch {} Step {}/{} query embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+
                 torch.save(
                     qvecs, os.path.join(save_embeds_path, '{}_queries.pt'.format(save_embeds_step)))
-            
+ 
+                print(
+                    ">>>>> Epoch {} Step {}/{} query embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                    
+                print()
+
             return qvecs
             
     def extract_negative_pool_vectors(self, net,
-                                      save_embeds=False, save_embeds_epoch=-1, save_embeds_step=-1,
+                                      save_embeds=False,
+                                      save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                                       save_embeds_path=''):
         # prepare network
         net.cuda()
@@ -212,17 +220,24 @@ class TuplesDataset(data.Dataset):
             
             # Serialize the query vectors
             if save_embeds:
-                print("Epoch {} Step {} pool embeddings serialization".format(save_embeds_epoch, save_embeds_step))
+                print(
+                    ">>>>> Epoch {} Step {}/{} pool embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
                 
                 torch.save(
                     poolvecs, os.path.join(save_embeds_path, '{}_pools.pt'.format(save_embeds_step)))
+                    
+                print(
+                    ">>>>> Epoch {} Step {}/{} pool embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                    
+                print()
             
             return poolvecs
 
     def create_epoch_tuples(self, net,
                             refresh_positive_pairs=True,
                             refresh_negative_pairs=True,
-                            save_embeds=False, save_embeds_epoch=-1, save_embeds_step=-1,
+                            save_embeds=False,
+                            save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                             save_embeds_path=''):
 
         print('>> Creating tuples for an epoch of {}-{}...'.format(self.name, self.mode))
@@ -258,11 +273,11 @@ class TuplesDataset(data.Dataset):
         with torch.no_grad():
             # extract query vectors
             qvecs = self.extract_query_vectors(
-                net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_path)
+                net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
 
             # extract negative pool vectors
             poolvecs = self.extract_negative_pool_vectors(
-                net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_path)
+                net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
 
             print('>> Searching for hard negatives...')
             # compute dot product scores and ranks on GPU

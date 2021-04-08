@@ -373,7 +373,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
     # create tuples for training
     avg_neg_distance = train_loader.dataset.create_epoch_tuples(
         model,
-        save_embeds=args.save_embeds, save_embeds_epoch=epoch, save_embeds_step=-1,
+        save_embeds=args.save_embeds,
+        save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader),
         save_embeds_path=save_embeds_dir)
 
     # switch to train mode
@@ -423,7 +424,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     model,
                     refresh_positive_pairs=False,
                     refresh_negative_pairs=False,
-                    save_embeds=args.save_embeds, save_embeds_epoch=epoch, save_embeds_step=i,
+                    save_embeds=args.save_embeds,
+                    save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader),
                     save_embeds_path=save_embeds_dir)
 
         # measure elapsed time

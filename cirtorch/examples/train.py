@@ -374,7 +374,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
     avg_neg_distance = train_loader.dataset.create_epoch_tuples(
         model,
         save_embeds=args.save_embeds,
-        save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader),
+        save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
         save_embeds_path=save_embeds_dir)
 
     # switch to train mode
@@ -389,19 +389,21 @@ def train(train_loader, model, criterion, optimizer, epoch):
     # Record indexes of batch members
     batch_members = []
     
-    for i, (input, target, index) in enumerate(train_loader):
+    for i, data in enumerate(train_loader):
+        images, target, index = data
+        
         # measure data loading time
         data_time.update(time.time() - end)
 
-        nq = len(input) # number of training tuples
-        ni = len(input[0]) # number of images per tuple
+        nq = len(images) # number of training tuples
+        ni = len(images[0]) # number of images per tuple
 
         for q in range(nq):
             output = torch.zeros(model.meta['outputdim'], ni).cuda()
             for imi in range(ni):
 
                 # compute output vector for image imi
-                output[:, imi] = model(input[q][imi].cuda()).squeeze()
+                output[:, imi] = model(images[q][imi].cuda()).squeeze()
 
             # reducing memory consumption:
             # compute loss for this query tuple only
@@ -433,21 +435,21 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     refresh_positive_pairs=False,
                     refresh_negative_pairs=False,
                     save_embeds=args.save_embeds,
-                    save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader),
+                    save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)
                     
                 if args.save_embeds:
                     print(
-                        ">>>>> Epoch {} Step {}/{} batch member serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                        ">>>>> Epoch {} Step {}/{} batch member serialization start.".format(epoch, i, len(train_loader)-1))
 
                     torch.save(
-                        batch_members, os.path.join(save_embeds_path, '{}_batch_members.pt'.format(save_embeds_step)))
+                        batch_members, os.path.join(save_embeds_dir, '{}_batch_members.pt'.format(i)))
                         
                     # Reset batch_members
                     batch_members = []
      
                     print(
-                        ">>>>> Epoch {} Step {}/{} batch member serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                        ">>>>> Epoch {} Step {}/{} batch member serialization complete!".format(epoch, i, len(train_loader)-1))
                         
                     print()
 

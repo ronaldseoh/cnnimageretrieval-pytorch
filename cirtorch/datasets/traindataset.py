@@ -348,6 +348,33 @@ class TuplesDataset(data.Dataset):
                         n_ndist += 1
                     r += 1
                 self.nidxs.append(nidxs)
+                
+            if save_embeds:
+                # Need to save idxs2images, so that we could figure out the original index
+                # of negative examples in poolvecs
+                print(
+                    ">>>>> Epoch {} Step {}/{} idxs2images serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+
+                torch.save(
+                    self.idxs2images, os.path.join(save_embeds_path, '{}_idxs2images.pt'.format(save_embeds_step)))
+ 
+                print(
+                    ">>>>> Epoch {} Step {}/{} idxs2images serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                    
+                print()
+                
+                # self.nidxs
+                print(
+                    ">>>>> Epoch {} Step {}/{} nidxs serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+
+                torch.save(
+                    self.idxs2images, os.path.join(save_embeds_path, '{}_nidxs.pt'.format(save_embeds_step)))
+ 
+                print(
+                    ">>>>> Epoch {} Step {}/{} nidxs serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                    
+                print()
+                    
             print('>>>> Average negative l2-distance: {:.2f}'.format(avg_ndist/n_ndist))
             print('>>>> Done')
 

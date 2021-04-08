@@ -132,7 +132,7 @@ class TuplesDataset(data.Dataset):
 
         target = torch.Tensor([-1, 1] + [0]*len(self.nidxs[index]))
 
-        return output, target
+        return output, target, index
 
     def __len__(self):
         # if not self.qidxs:

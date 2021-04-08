@@ -385,7 +385,11 @@ def train(train_loader, model, criterion, optimizer, epoch):
     optimizer.zero_grad()
 
     end = time.time()
-    for i, (input, target) in enumerate(train_loader):
+    
+    # Record indexes of batch members
+    batch_members = []
+    
+    for i, (input, target, index) in enumerate(train_loader):
         # measure data loading time
         data_time.update(time.time() - end)
 
@@ -407,6 +411,10 @@ def train(train_loader, model, criterion, optimizer, epoch):
             loss = criterion(output, target[q].cuda())
             losses.update(loss.item())
             loss.backward()
+            
+        # With args.save_embeds, record which queries were in the batch
+        if args.save_embeds:
+            batch_members.append(index)
 
         if (i + 1) % args.update_every == 0:
             # do one step for multiple batches
@@ -427,6 +435,21 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader),
                     save_embeds_path=save_embeds_dir)
+                    
+                if args.save_embeds:
+                    print(
+                        ">>>>> Epoch {} Step {}/{} batch member serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+
+                    torch.save(
+                        batch_members, os.path.join(save_embeds_path, '{}_batch_members.pt'.format(save_embeds_step)))
+                        
+                    # Reset batch_members
+                    batch_members = []
+     
+                    print(
+                        ">>>>> Epoch {} Step {}/{} batch member serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                        
+                    print()
 
         # measure elapsed time
         batch_time.update(time.time() - end)

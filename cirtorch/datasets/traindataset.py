@@ -189,6 +189,10 @@ class TuplesDataset(data.Dataset):
                     ">>>>> Epoch {} Step {}/{} query embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
                     
                 print()
+                
+                # Although not needed in the original training, we need vectors of positive images as well for our purposes.
+                _ = self.extract_positive_vectors(
+                    net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
 
             return qvecs
             
@@ -230,8 +234,48 @@ class TuplesDataset(data.Dataset):
                     ">>>>> Epoch {} Step {}/{} pool embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
                     
                 print()
-            
+
             return poolvecs
+            
+    def extract_positive_vectors(self, net,
+                                 save_embeds=False,
+                                 save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
+                                 save_embeds_path=''):
+        # prepare network
+        net.cuda()
+        net.eval()
+
+        # no gradients computed, to reduce memory and increase speed
+        with torch.no_grad():
+
+            print('>> Extracting descriptors for positive images...')
+            # prepare positive image loader
+            loader = torch.utils.data.DataLoader(
+                ImagesFromList(root='', images=[self.images[i] for i in self.pidxs], imsize=self.imsize, transform=self.transform),
+                batch_size=1, shuffle=False, num_workers=8, pin_memory=True
+            )
+            # extract positive image vectors
+            pvecs = torch.zeros(net.meta['outputdim'], len(self.pidxs)).cuda()
+            for i, input in enumerate(loader):
+                pvecs[:, i] = net(input.cuda()).data.squeeze()
+                if (i+1) % self.print_freq == 0 or (i+1) == len(self.pidxs):
+                    print('\r>>>> {}/{} done...'.format(i+1, len(self.pidxs)), end='')
+            print('')
+            
+            # Serialize the positive vectors
+            if save_embeds:
+                print(
+                    ">>>>> Epoch {} Step {}/{} positive embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+
+                torch.save(
+                    qvecs, os.path.join(save_embeds_path, '{}_positive.pt'.format(save_embeds_step)))
+ 
+                print(
+                    ">>>>> Epoch {} Step {}/{} positive embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                    
+                print()
+
+            return pvecs
 
     def create_epoch_tuples(self, net,
                             refresh_positive_pairs=True,

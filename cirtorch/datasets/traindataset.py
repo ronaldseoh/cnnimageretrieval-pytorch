@@ -368,7 +368,7 @@ class TuplesDataset(data.Dataset):
                     ">>>>> Epoch {} Step {}/{} nidxs serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
 
                 torch.save(
-                    self.idxs2images, os.path.join(save_embeds_path, '{}_nidxs.pt'.format(save_embeds_step)))
+                    self.nidxs, os.path.join(save_embeds_path, '{}_nidxs.pt'.format(save_embeds_step)))
  
                 print(
                     ">>>>> Epoch {} Step {}/{} nidxs serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))

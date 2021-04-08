@@ -268,7 +268,7 @@ class TuplesDataset(data.Dataset):
                     ">>>>> Epoch {} Step {}/{} positive embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
 
                 torch.save(
-                    qvecs, os.path.join(save_embeds_path, '{}_positive.pt'.format(save_embeds_step)))
+                    pvecs, os.path.join(save_embeds_path, '{}_positive.pt'.format(save_embeds_step)))
  
                 print(
                     ">>>>> Epoch {} Step {}/{} positive embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))

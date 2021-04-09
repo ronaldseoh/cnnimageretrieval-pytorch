@@ -479,17 +479,19 @@ def validate(val_loader, model, criterion, epoch):
     model.eval()
 
     end = time.time()
-    for i, (input, target) in enumerate(val_loader):
+    for i, data in enumerate(val_loader):
+        
+        images, target, index = data
 
-        nq = len(input) # number of training tuples
-        ni = len(input[0]) # number of images per tuple
+        nq = len(images) # number of training tuples
+        ni = len(images[0]) # number of images per tuple
         output = torch.zeros(model.meta['outputdim'], nq*ni).cuda()
 
         for q in range(nq):
             for imi in range(ni):
 
                 # compute output vector for image imi of query q
-                output[:, q*ni + imi] = model(input[q][imi].cuda()).squeeze()
+                output[:, q*ni + imi] = model(images[q][imi].cuda()).squeeze()
 
         # no need to reduce memory consumption (no backward pass):
         # compute loss for the full batch

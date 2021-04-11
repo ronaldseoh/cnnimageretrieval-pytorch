@@ -158,7 +158,12 @@ class TuplesDataset(data.Dataset):
                               save_embeds_path=''):
         # prepare network
         net.cuda()
-        net.eval()
+        
+        # if net was in training mode, temporarily switch to eval mode
+        was_training = net.training
+
+        if was_training:
+            net.eval()
 
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
@@ -194,7 +199,11 @@ class TuplesDataset(data.Dataset):
                 _ = self.extract_positive_vectors(
                     net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
 
-            return qvecs
+        # Restore the training mode
+        if was_training:
+            net.train()
+
+        return qvecs
             
     def extract_negative_pool_vectors(self, net,
                                       save_embeds=False,
@@ -202,7 +211,12 @@ class TuplesDataset(data.Dataset):
                                       save_embeds_path=''):
         # prepare network
         net.cuda()
-        net.eval()
+        
+        # if net was in training mode, temporarily switch to eval mode
+        was_training = net.training
+
+        if was_training:
+            net.eval()
 
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():    
@@ -235,7 +249,11 @@ class TuplesDataset(data.Dataset):
                     
                 print()
 
-            return poolvecs
+        # Restore the training mode
+        if was_training:
+            net.train()
+
+        return poolvecs
             
     def extract_positive_vectors(self, net,
                                  save_embeds=False,
@@ -243,7 +261,12 @@ class TuplesDataset(data.Dataset):
                                  save_embeds_path=''):
         # prepare network
         net.cuda()
-        net.eval()
+        
+        # if net was in training mode, temporarily switch to eval mode
+        was_training = net.training
+
+        if was_training:
+            net.eval()
 
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
@@ -275,7 +298,11 @@ class TuplesDataset(data.Dataset):
                     
                 print()
 
-            return pvecs
+        # Restore the training mode
+        if was_training:
+            net.train()
+        
+        return pvecs
 
     def create_epoch_tuples(self, net,
                             refresh_positive_pairs=True,

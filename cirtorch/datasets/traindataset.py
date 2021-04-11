@@ -104,6 +104,10 @@ class TuplesDataset(data.Dataset):
         self.print_freq = 10
         
         # Dense refresh experiments
+        self.qvecs = None
+        self.poolvecs = None
+        self.pvecs = None
+        
         self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
         self.dense_refresh_batch_random = dense_refresh_batch_random
@@ -156,7 +160,7 @@ class TuplesDataset(data.Dataset):
         fmt_str += '{0}{1}\n'.format(tmp, self.transform.__repr__().replace('\n', '\n' + ' ' * len(tmp)))
         return fmt_str
         
-    def extract_query_vectors(self, net,
+    def extract_query_vectors(self, net, target_data_idxs=[],
                               save_embeds=False,
                               save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                               save_embeds_path=''):
@@ -171,17 +175,27 @@ class TuplesDataset(data.Dataset):
 
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
-
+            if len(target_data_indexes) > 0:
+                # Refresh just a single data point specified by target_data_index
+                qidxs = [self.qidxs[t] for t in target_data_idxs]
+                images_to_rebuild = [self.images[i] for i in qidxs]
+            else:
+                # Rebuild all queries within the dataset
+                images_to_rebuild = [self.images[i] for i in self.qidxs]
+                
             print('>> Extracting descriptors for query images...')
             # prepare query loader
             loader = torch.utils.data.DataLoader(
-                ImagesFromList(root='', images=[self.images[i] for i in self.qidxs], imsize=self.imsize, transform=self.transform),
+                ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
+
             # extract query vectors
-            qvecs = torch.zeros(net.meta['outputdim'], len(self.qidxs)).cuda()
+            if self.qvecs is None:
+                self.qvecs = torch.zeros(net.meta['outputdim'], len(self.qidxs)).cuda()
+
             for i, input in enumerate(loader):
-                qvecs[:, i] = net(input.cuda()).data.squeeze()
+                self.qvecs[:, i] = net(input.cuda()).data.squeeze()
                 if (i+1) % self.print_freq == 0 or (i+1) == len(self.qidxs):
                     print('\r>>>> {}/{} done...'.format(i+1, len(self.qidxs)), end='')
             print('')
@@ -192,24 +206,22 @@ class TuplesDataset(data.Dataset):
                     ">>>>> Epoch {} Step {}/{} query embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
 
                 torch.save(
-                    qvecs, os.path.join(save_embeds_path, '{}_queries.pt'.format(save_embeds_step)))
+                    self.qvecs, os.path.join(save_embeds_path, '{}_queries.pt'.format(save_embeds_step)))
  
                 print(
                     ">>>>> Epoch {} Step {}/{} query embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
                     
                 print()
                 
-                # Although not needed in the original training, we need vectors of positive images as well for our purposes.
-                _ = self.extract_positive_vectors(
-                    net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
+            # Although not needed in the original training, we need vectors of positive images as well for our purposes.
+            self.extract_positive_vectors(
+                net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
 
         # Restore the training mode
         if was_training:
             net.train()
-
-        return qvecs
             
-    def extract_negative_pool_vectors(self, net,
+    def extract_negative_pool_vectors(self, net, target_data_idxs=[],
                                       save_embeds=False,
                                       save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                                       save_embeds_path=''):
@@ -232,10 +244,11 @@ class TuplesDataset(data.Dataset):
             )
 
             # extract negative pool vectors
-            poolvecs = torch.zeros(net.meta['outputdim'], len(self.idxs2images)).cuda()
+            if self.poolvecs is None:
+                self.poolvecs = torch.zeros(net.meta['outputdim'], len(self.idxs2images)).cuda()
 
             for i, input in enumerate(loader):
-                poolvecs[:, i] = net(input.cuda()).data.squeeze()
+                self.poolvecs[:, i] = net(input.cuda()).data.squeeze()
                 if (i+1) % self.print_freq == 0 or (i+1) == len(self.idxs2images):
                     print('\r>>>> {}/{} done...'.format(i+1, len(self.idxs2images)), end='')
             print('')
@@ -246,7 +259,7 @@ class TuplesDataset(data.Dataset):
                     ">>>>> Epoch {} Step {}/{} pool embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
                 
                 torch.save(
-                    poolvecs, os.path.join(save_embeds_path, '{}_pools.pt'.format(save_embeds_step)))
+                    self.poolvecs, os.path.join(save_embeds_path, '{}_pools.pt'.format(save_embeds_step)))
                     
                 print(
                     ">>>>> Epoch {} Step {}/{} pool embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
@@ -256,10 +269,8 @@ class TuplesDataset(data.Dataset):
         # Restore the training mode
         if was_training:
             net.train()
-
-        return poolvecs
             
-    def extract_positive_vectors(self, net,
+    def extract_positive_vectors(self, net, target_data_idxs=[],
                                  save_embeds=False,
                                  save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                                  save_embeds_path=''):
@@ -282,9 +293,11 @@ class TuplesDataset(data.Dataset):
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
             # extract positive image vectors
-            pvecs = torch.zeros(net.meta['outputdim'], len(self.pidxs)).cuda()
+            if self.pvecs is None:
+                self.pvecs = torch.zeros(net.meta['outputdim'], len(self.pidxs)).cuda()
+
             for i, input in enumerate(loader):
-                pvecs[:, i] = net(input.cuda()).data.squeeze()
+                self.pvecs[:, i] = net(input.cuda()).data.squeeze()
                 if (i+1) % self.print_freq == 0 or (i+1) == len(self.pidxs):
                     print('\r>>>> {}/{} done...'.format(i+1, len(self.pidxs)), end='')
             print('')
@@ -295,7 +308,7 @@ class TuplesDataset(data.Dataset):
                     ">>>>> Epoch {} Step {}/{} positive embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
 
                 torch.save(
-                    pvecs, os.path.join(save_embeds_path, '{}_positive.pt'.format(save_embeds_step)))
+                    self.pvecs, os.path.join(save_embeds_path, '{}_positive.pt'.format(save_embeds_step)))
  
                 print(
                     ">>>>> Epoch {} Step {}/{} positive embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
@@ -305,8 +318,7 @@ class TuplesDataset(data.Dataset):
         # Restore the training mode
         if was_training:
             net.train()
-        
-        return pvecs
+
 
     def create_epoch_tuples(self, net,
                             refresh_positive_pool=True,
@@ -347,16 +359,16 @@ class TuplesDataset(data.Dataset):
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
             # extract query vectors
-            qvecs = self.extract_query_vectors(
+            self.extract_query_vectors(
                 net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
 
             # extract negative pool vectors
-            poolvecs = self.extract_negative_pool_vectors(
+            self.extract_negative_pool_vectors(
                 net, save_embeds, save_embeds_epoch, save_embeds_step, save_embeds_total_steps, save_embeds_path)
 
             print('>> Searching for hard negatives...')
             # compute dot product scores and ranks on GPU
-            scores = torch.mm(poolvecs.t(), qvecs)
+            scores = torch.mm(self.poolvecs.t(), self.qvecs)
             scores, ranks = torch.sort(scores, dim=0, descending=True)
             avg_ndist = torch.tensor(0).float().cuda()  # for statistics
             n_ndist = torch.tensor(0).float().cuda()  # for statistics

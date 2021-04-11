@@ -140,6 +140,8 @@ parser.add_argument('--dense_refresh_batch_multi_hop',
 parser.add_argument('--dense_refresh_batch_random',
                     help='refresh embeddings of randomly selected non-batch queries.',
                     default=-1, type=int)
+                    
+parser.add_argument('--calculate_positive_distance', action="store_true")
 
 min_loss = float('inf')
 
@@ -437,6 +439,18 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)
+                    
+                if args.calculate_positive_distance:
+                    with torch.no_grad():
+                        avg_pos_distance = 0
+
+                        for q in range(nq):
+                            torch.pow(images[q][0] - images[q][1] + 1e-6, 2).sum(dim=0).sqrt()
+                            
+                        avg_pos_distance /= nq
+                            
+                        print('>>>> Average positive l2-distance: {:.2f}'.format(avg_pos_distance))
+                        print()
                     
                 if args.save_embeds:
                     print(

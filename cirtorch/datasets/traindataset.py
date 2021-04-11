@@ -4,6 +4,7 @@ import pdb
 
 import torch
 import torch.utils.data as data
+import tqdm
 
 from cirtorch.datasets.datahelpers import default_loader, imresize, cid2filename
 from cirtorch.datasets.genericdataset import ImagesFromList
@@ -181,7 +182,8 @@ class TuplesDataset(data.Dataset):
                 images_to_rebuild = [self.images[i] for i in qidxs]
             else:
                 # Rebuild all queries within the dataset
-                images_to_rebuild = [self.images[i] for i in self.qidxs]
+                qidxs = self.qidxs
+                images_to_rebuild = [self.images[i] for i in qidxs]
                 
             print('>> Extracting descriptors for query images...')
             # prepare query loader
@@ -194,10 +196,9 @@ class TuplesDataset(data.Dataset):
             if self.qvecs is None:
                 self.qvecs = torch.zeros(net.meta['outputdim'], len(self.qidxs)).cuda()
 
-            for i, input in enumerate(loader):
-                self.qvecs[:, i] = net(input.cuda()).data.squeeze()
-                if (i+1) % self.print_freq == 0 or (i+1) == len(self.qidxs):
-                    print('\r>>>> {}/{} done...'.format(i+1, len(self.qidxs)), end='')
+            for i, input in tqdm.tqdm(enumerate(loader)):
+                self.qvecs[:, qidxs[i]] = net(input.cuda()).data.squeeze()
+
             print('')
             
             # Serialize the query vectors
@@ -236,10 +237,20 @@ class TuplesDataset(data.Dataset):
 
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():    
+            
+            if len(target_data_indexes) > 0:
+                # Refresh just a single data point specified by target_data_index
+                idxs2images = [self.idxs2images[t] for t in target_data_idxs]
+                images_to_rebuild = [self.images[i] for i in idxs2images]
+            else:
+                # Rebuild all queries within the dataset
+                idxs2images = self.idxs2images
+                images_to_rebuild = [self.images[i] for i in idxs2images]
+
             print('>> Extracting descriptors for negative pool...')
             # prepare negative pool data loader
             loader = torch.utils.data.DataLoader(
-                ImagesFromList(root='', images=[self.images[i] for i in self.idxs2images], imsize=self.imsize, transform=self.transform),
+                ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
 
@@ -247,10 +258,8 @@ class TuplesDataset(data.Dataset):
             if self.poolvecs is None:
                 self.poolvecs = torch.zeros(net.meta['outputdim'], len(self.idxs2images)).cuda()
 
-            for i, input in enumerate(loader):
-                self.poolvecs[:, i] = net(input.cuda()).data.squeeze()
-                if (i+1) % self.print_freq == 0 or (i+1) == len(self.idxs2images):
-                    print('\r>>>> {}/{} done...'.format(i+1, len(self.idxs2images)), end='')
+            for i, input in tqdm.tqdm(enumerate(loader)):
+                self.poolvecs[:, idxs2images[i]] = net(input.cuda()).data.squeeze()
             print('')
             
             # Serialize the query vectors
@@ -286,6 +295,15 @@ class TuplesDataset(data.Dataset):
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
 
+            if len(target_data_indexes) > 0:
+                # Refresh just a single data point specified by target_data_index
+                pidxs = [self.idxs2images[t] for t in target_data_idxs]
+                images_to_rebuild = [self.images[i] for i in pidxs]
+            else:
+                # Rebuild all positive images within the dataset
+                pidxs = self.pidxs
+                images_to_rebuild = [self.images[i] for i in pidxs]
+
             print('>> Extracting descriptors for positive images...')
             # prepare positive image loader
             loader = torch.utils.data.DataLoader(
@@ -296,10 +314,8 @@ class TuplesDataset(data.Dataset):
             if self.pvecs is None:
                 self.pvecs = torch.zeros(net.meta['outputdim'], len(self.pidxs)).cuda()
 
-            for i, input in enumerate(loader):
-                self.pvecs[:, i] = net(input.cuda()).data.squeeze()
-                if (i+1) % self.print_freq == 0 or (i+1) == len(self.pidxs):
-                    print('\r>>>> {}/{} done...'.format(i+1, len(self.pidxs)), end='')
+            for i, input in tqdm.tqdm(enumerate(loader)):
+                self.pvecs[:, pidxs[i]] = net(input.cuda()).data.squeeze()
             print('')
             
             # Serialize the positive vectors

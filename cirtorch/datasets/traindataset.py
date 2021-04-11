@@ -40,7 +40,6 @@ class TuplesDataset(data.Dataset):
     """
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
-                 dense_refresh_interval=-1,
                  dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1):
 
         if not (mode == 'train' or mode == 'val'):
@@ -103,6 +102,11 @@ class TuplesDataset(data.Dataset):
         self.loader = loader
 
         self.print_freq = 10
+        
+        # Dense refresh experiments
+        self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
+        self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
+        self.dense_refresh_batch_random = dense_refresh_batch_random
 
     def __getitem__(self, index):
         """
@@ -305,8 +309,8 @@ class TuplesDataset(data.Dataset):
         return pvecs
 
     def create_epoch_tuples(self, net,
-                            refresh_positive_pairs=True,
-                            refresh_negative_pairs=True,
+                            refresh_positive_pool=True,
+                            refresh_negative_pool=True,
                             save_embeds=False,
                             save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                             save_embeds_path=''):

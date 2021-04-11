@@ -432,8 +432,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
             if args.dense_refresh_interval > 0 and (i + 1) % args.dense_refresh_interval == 0:
                 avg_neg_distance = train_loader.dataset.create_epoch_tuples(
                     model,
-                    refresh_positive_pairs=False,
-                    refresh_negative_pairs=False,
+                    refresh_positive_pool=False,
+                    refresh_negative_pool=False,
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)

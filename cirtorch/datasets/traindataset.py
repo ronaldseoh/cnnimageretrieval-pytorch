@@ -343,7 +343,6 @@ class TuplesDataset(data.Dataset):
         if was_training:
             net.train()
 
-
     def create_epoch_tuples(self, net,
                             refresh_positive_pool=True,
                             refresh_negative_pool=True,
@@ -421,7 +420,7 @@ class TuplesDataset(data.Dataset):
                     if not self.clusters[potential] in clusters:
                         nidxs.append(potential)
                         clusters.append(self.clusters[potential])
-                        avg_ndist += torch.pow(qvecs[:,q]-poolvecs[:,ranks[r, q]]+1e-6, 2).sum(dim=0).sqrt()
+                        avg_ndist += torch.pow(self.qvecs[:,q]-self.poolvecs[:,ranks[r, q]]+1e-6, 2).sum(dim=0).sqrt()
                         n_ndist += 1
                     r += 1
                 self.nidxs.append(nidxs)
@@ -456,3 +455,18 @@ class TuplesDataset(data.Dataset):
             print('>>>> Done')
 
         return (avg_ndist/n_ndist).item()  # return average negative l2-distance
+
+    def calculate_average_positive_distance(self):
+
+        with torch.no_grad():
+            avg_pos_distance = 0
+
+            for q in range(len(self.qidxs)):
+                torch.pow(self.qvecs[:,q] - self.pvecs[:,q] + 1e-6, 2).sum(dim=0).sqrt()
+                
+            avg_pos_distance /= len(self.qidxs)
+                
+            print('>>>> Average positive l2-distance: {:.2f}'.format(avg_pos_distance))
+            print()
+            
+        return avg_pos_distance

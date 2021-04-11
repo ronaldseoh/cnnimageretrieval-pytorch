@@ -440,16 +440,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     save_embeds_path=save_embeds_dir)
                     
                 if args.calculate_positive_distance:
-                    with torch.no_grad():
-                        avg_pos_distance = 0
-
-                        for q in range(nq):
-                            torch.pow(images[q][0] - images[q][1] + 1e-6, 2).sum(dim=0).sqrt()
-                            
-                        avg_pos_distance /= nq
-                            
-                        print('>>>> Average positive l2-distance: {:.2f}'.format(avg_pos_distance))
-                        print()
+                    avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
                     
                 if args.save_embeds:
                     print(

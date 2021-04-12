@@ -144,7 +144,7 @@ parser.add_argument('--dense_refresh_batch_random',
 parser.add_argument('--calculate_positive_distance', action="store_true")
 
 parser.add_argument('--seed',
-                    help='how often should we rebuild dense embeddings, in terms of training steps?',
+                    help='random seed',
                     default=0, type=int)
 
 min_loss = float('inf')
@@ -380,6 +380,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
         save_embeds=args.save_embeds,
         save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
         save_embeds_path=save_embeds_dir)
+        
+    if args.calculate_positive_distance:
+        avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
 
     # switch to train mode
     model.train()

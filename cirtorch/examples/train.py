@@ -143,6 +143,10 @@ parser.add_argument('--dense_refresh_batch_random',
                     
 parser.add_argument('--calculate_positive_distance', action="store_true")
 
+parser.add_argument('--seed',
+                    help='how often should we rebuild dense embeddings, in terms of training steps?',
+                    default=0, type=int)
+
 min_loss = float('inf')
 
 def main():
@@ -185,10 +189,9 @@ def main():
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_id
     
     # set random seeds
-    # TODO: maybe pass as argument in future implementation?
-    torch.manual_seed(0)
-    torch.cuda.manual_seed_all(0)
-    np.random.seed(0)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    np.random.seed(args.seed)
 
     # initialize model
     if args.pretrained:
@@ -322,9 +325,9 @@ def main():
     for epoch in range(start_epoch, args.epochs):
 
         # set manual seeds per epoch
-        np.random.seed(epoch)
-        torch.manual_seed(epoch)
-        torch.cuda.manual_seed_all(epoch)
+        np.random.seed(args.seed + epoch)
+        torch.manual_seed(args.seed + epoch)
+        torch.cuda.manual_seed_all(args.seed + epoch)
 
         # train for one epoch on train set
         loss = train(train_loader, model, criterion, optimizer, epoch)

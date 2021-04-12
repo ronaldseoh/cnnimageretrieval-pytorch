@@ -197,9 +197,12 @@ class TuplesDataset(data.Dataset):
             if self.qvecs is None:
                 self.qvecs = torch.zeros(net.meta['outputdim'], len(self.qidxs)).cuda()
 
-            for i, input in tqdm.tqdm(zip(target_data_idxs, loader)):
-                self.qvecs[:, i] = net(input.cuda()).data.squeeze()
+            j = 1
 
+            for i, image in zip(target_data_idxs, loader):
+                self.qvecs[:, i] = net(image.cuda()).data.squeeze()
+                print('\r>>>> {}/{} done...'.format(j, len(target_data_idxs)), end='')
+                j = j + 1
             print('')
             
             # Serialize the query vectors
@@ -265,8 +268,12 @@ class TuplesDataset(data.Dataset):
             if self.poolvecs is None:
                 self.poolvecs = torch.zeros(net.meta['outputdim'], len(self.idxs2images)).cuda()
 
-            for i, input in tqdm.tqdm(zip(target_data_idxs, loader)):
-                self.poolvecs[:, i] = net(input.cuda()).data.squeeze()
+            j = 1
+
+            for i, image in zip(target_data_idxs, loader):
+                self.poolvecs[:, i] = net(image.cuda()).data.squeeze()
+                print('\r>>>> {}/{} done...'.format(j, len(target_data_idxs)), end='')
+                j = j + 1
             print('')
             
             # Serialize the query vectors
@@ -315,15 +322,19 @@ class TuplesDataset(data.Dataset):
             print('>> Extracting descriptors for positive images...')
             # prepare positive image loader
             loader = torch.utils.data.DataLoader(
-                ImagesFromList(root='', images=[self.images[i] for i in self.pidxs], imsize=self.imsize, transform=self.transform),
+                ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
             # extract positive image vectors
             if self.pvecs is None:
                 self.pvecs = torch.zeros(net.meta['outputdim'], len(self.pidxs)).cuda()
 
-            for i, input in tqdm.tqdm(zip(target_data_idxs, loader)):
-                self.pvecs[:, i] = net(input.cuda()).data.squeeze()
+            j = 1
+
+            for i, image in zip(target_data_idxs, loader):
+                self.pvecs[:, i] = net(image.cuda()).data.squeeze()
+                print('\r>>>> {}/{} done...'.format(j, len(target_data_idxs)), end='')
+                j = j + 1
             print('')
             
             # Serialize the positive vectors
@@ -353,6 +364,15 @@ class TuplesDataset(data.Dataset):
         print('>> Creating tuples for an epoch of {}-{}...'.format(self.name, self.mode))
         print(">>>> used network: ")
         print(net.meta_repr())
+        
+        # prepare network
+        net.cuda()
+        
+        # if net was in training mode, temporarily switch to eval mode
+        was_training = net.training
+
+        if was_training:
+            net.eval()
 
         ## ------------------------
         ## SELECTING POSITIVE PAIRS
@@ -454,15 +474,19 @@ class TuplesDataset(data.Dataset):
             print('>>>> Average negative l2-distance: {:.2f}'.format(avg_ndist/n_ndist))
             print('>>>> Done')
 
+        # Restore the training mode
+        if was_training:
+            net.train()
+
         return (avg_ndist/n_ndist).item()  # return average negative l2-distance
 
     def calculate_average_positive_distance(self):
-
+            
         with torch.no_grad():
             avg_pos_distance = 0
 
             for q in range(len(self.qidxs)):
-                torch.pow(self.qvecs[:,q] - self.pvecs[:,q] + 1e-6, 2).sum(dim=0).sqrt()
+                avg_pos_distance += torch.pow(self.qvecs[:,q] - self.pvecs[:,q] + 1e-6, 2).sum(dim=0).sqrt()
                 
             avg_pos_distance /= len(self.qidxs)
                 

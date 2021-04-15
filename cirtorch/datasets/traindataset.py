@@ -257,6 +257,7 @@ class TuplesDataset(data.Dataset):
                     
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 
+                target_data_idxs = list(range(len(idxs2images)))
                 images_to_rebuild = [self.images[i] for i in idxs2images]
             else:
                 # Rebuild all queries within the negative image pool

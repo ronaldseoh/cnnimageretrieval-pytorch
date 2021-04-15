@@ -250,10 +250,16 @@ class TuplesDataset(data.Dataset):
             
             if len(target_data_idxs) > 0:
                 # Refresh just a single data point specified by target_data_index
-                idxs2images = [self.idxs2images[t] for t in target_data_idxs]
+                idxs2images = set()
+
+                for qidx in target_data_idxs:
+                    idxs2images = idxs2images.union(set(self.nidxs[qidx]))
+                    
+                print("Negative pool rebuild - idxs2images:", str(idxs2images))
+
                 images_to_rebuild = [self.images[i] for i in idxs2images]
             else:
-                # Rebuild all queries within the dataset
+                # Rebuild all queries within the negative image pool
                 target_data_idxs = list(range(len(self.idxs2images)))
                 idxs2images = self.idxs2images
                 images_to_rebuild = [self.images[i] for i in idxs2images]
@@ -312,7 +318,7 @@ class TuplesDataset(data.Dataset):
 
             if len(target_data_idxs) > 0:
                 # Refresh just a single data point specified by target_data_index
-                pidxs = [self.idxs2images[t] for t in target_data_idxs]
+                pidxs = [self.pidxs[t] for t in target_data_idxs]
                 images_to_rebuild = [self.images[i] for i in pidxs]
             else:
                 # Rebuild all positive images within the dataset

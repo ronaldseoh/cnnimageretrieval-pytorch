@@ -354,7 +354,7 @@ class TuplesDataset(data.Dataset):
         if was_training:
             net.train()
 
-    def create_epoch_tuples(self, net,
+    def create_epoch_tuples(self, net, batch_members,
                             refresh_positive_pool=True,
                             refresh_negative_pool=True,
                             save_embeds=False,
@@ -401,23 +401,41 @@ class TuplesDataset(data.Dataset):
 
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
-            # extract query vectors
-            self.extract_query_vectors(
-                net,
-                save_embeds=save_embeds,
-                save_embeds_epoch=save_embeds_epoch,
-                save_embeds_step=save_embeds_step,
-                save_embeds_total_steps=save_embeds_total_steps,
-                save_embeds_path=save_embeds_path)
+            if self.dense_refresh_batch_and_nearby >= 0:
+                
+                total_rebuild_indexes = set(batch_members)
+                
+                print("Batch indexes to rebuild (Before searching nearby):", str(total_rebuild_indexes))
+                print()
+                
+                if self.dense_refresh_batch_and_nearby >= 1:
+                    for bq in batch_members:
+                        nearby_queries = set(self.get_nearby_queries(bq, self.dense_refresh_batch_and_nearby))
+                        print("Batch member", str(bq), " query neighbors:", str(nearby_queries))
+                        total_rebuild_indexes += nearby_queries
+                        
+                print("Batch indexes to rebuild (After searching nearby):", str(total_rebuild_indexes))
+                print()
+                        
+                # extract query vectors
+                self.extract_query_vectors(
+                    net,
+                    target_data_idx=total_rebuild_indexes,
+                    save_embeds=save_embeds,
+                    save_embeds_epoch=save_embeds_epoch,
+                    save_embeds_step=save_embeds_step,
+                    save_embeds_total_steps=save_embeds_total_steps,
+                    save_embeds_path=save_embeds_path)
 
-            # extract negative pool vectors
-            self.extract_negative_pool_vectors(
-                net,
-                save_embeds=save_embeds,
-                save_embeds_epoch=save_embeds_epoch,
-                save_embeds_step=save_embeds_step,
-                save_embeds_total_steps=save_embeds_total_steps,
-                save_embeds_path=save_embeds_path)
+                # extract negative pool vectors
+                self.extract_negative_pool_vectors(
+                    net,
+                    target_data_idx=total_rebuild_indexes,
+                    save_embeds=save_embeds,
+                    save_embeds_epoch=save_embeds_epoch,
+                    save_embeds_step=save_embeds_step,
+                    save_embeds_total_steps=save_embeds_total_steps,
+                    save_embeds_path=save_embeds_path)
 
             print('>> Searching for hard negatives...')
             # compute dot product scores and ranks on GPU
@@ -494,3 +512,20 @@ class TuplesDataset(data.Dataset):
             print()
             
         return avg_pos_distance
+        
+    def get_nearby_queries(self, qidx, max_num):
+            
+        with torch.no_grad():
+            candidate_queries = list(set(range(len(self.qidxs))) - set([qidx]))
+            
+            candidate_distances = []
+
+            for q in candidate_queries:
+                candidate_distances.append(
+                    torch.pow(self.qvecs[:,qidx] - self.qvecs[:,q] + 1e-6, 2).sum(dim=0).sqrt())
+                    
+            candidate_distances = torch.tensor(candidate_distances)
+            
+            top_indexes = torch.argsort(candidate_distances)[:max_num]
+            
+        return [candidate_queries[int(i)] for i in top_indexes]

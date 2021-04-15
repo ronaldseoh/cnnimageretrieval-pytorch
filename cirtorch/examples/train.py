@@ -421,9 +421,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
             losses.update(loss.item())
             loss.backward()
             
-        # With args.save_embeds, record which queries were in the batch
-        if args.save_embeds:
-            batch_members.append(index)
+        # record which queries were in the batch
+        batch_members = index
 
         if (i + 1) % args.update_every == 0:
             # do one step for multiple batches
@@ -456,14 +455,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
                     torch.save(
                         batch_members, os.path.join(save_embeds_dir, '{}_batch_members.pt'.format(i)))
-                        
-                    # Reset batch_members
-                    batch_members = []
      
                     print(
                         ">>>>> Epoch {} Step {}/{} batch member serialization complete!".format(epoch, i, len(train_loader)-1))
                         
                     print()
+                
+                # Reset batch_members
+                batch_members = []
 
         # measure elapsed time
         batch_time.update(time.time() - end)

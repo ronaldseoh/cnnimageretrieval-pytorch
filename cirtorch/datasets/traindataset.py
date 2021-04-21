@@ -179,12 +179,12 @@ class TuplesDataset(data.Dataset):
             if len(target_data_idxs) > 0:
                 # Refresh just a single data point specified by target_data_index
                 qidxs = [self.qidxs[t] for t in target_data_idxs]
-                images_to_rebuild = [self.images[i] for i in qidxs]
             else:
                 # Rebuild all queries within the dataset
                 target_data_idxs = list(range(len(self.qidxs)))
                 qidxs = self.qidxs
-                images_to_rebuild = [self.images[i] for i in qidxs]
+            
+            images_to_rebuild = [self.images[i] for i in qidxs]
                 
             print('>> Extracting descriptors for query images...')
             # prepare query loader
@@ -258,12 +258,12 @@ class TuplesDataset(data.Dataset):
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 
                 target_data_idxs = list(range(len(idxs2images)))
-                images_to_rebuild = [self.images[i] for i in idxs2images]
             else:
                 # Rebuild all queries within the negative image pool
                 target_data_idxs = list(range(len(self.idxs2images)))
                 idxs2images = self.idxs2images
-                images_to_rebuild = [self.images[i] for i in idxs2images]
+            
+            images_to_rebuild = [self.images[i] for i in idxs2images]
 
             print('>> Extracting descriptors for negative pool...')
             # prepare negative pool data loader
@@ -320,12 +320,12 @@ class TuplesDataset(data.Dataset):
             if len(target_data_idxs) > 0:
                 # Refresh just a single data point specified by target_data_index
                 pidxs = [self.pidxs[t] for t in target_data_idxs]
-                images_to_rebuild = [self.images[i] for i in pidxs]
             else:
                 # Rebuild all positive images within the dataset
                 target_data_idxs = list(range(len(self.pidxs)))
                 pidxs = self.pidxs
-                images_to_rebuild = [self.images[i] for i in pidxs]
+            
+            images_to_rebuild = [self.images[i] for i in pidxs]
 
             print('>> Extracting descriptors for positive images...')
             # prepare positive image loader

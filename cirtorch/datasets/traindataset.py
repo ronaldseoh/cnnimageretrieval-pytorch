@@ -257,7 +257,7 @@ class TuplesDataset(data.Dataset):
                     
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 
-                target_data_idxs = [self.idxs2images.index(im_index) for im_index in idxs2images]
+                target_data_idxs = [torch.nonzero(self.idxs2images == im_index, as_tuple=False).squeeze().item() for im_index in idxs2images]
             else:
                 # Rebuild all queries within the negative image pool
                 target_data_idxs = list(range(len(self.idxs2images)))

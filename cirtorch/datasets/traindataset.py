@@ -532,7 +532,7 @@ class TuplesDataset(data.Dataset):
         with torch.no_grad():
             qidx_dataset_index = self.qidxs.index(qidx)
 
-            candidate_queries_dataset_indexes = list(set(range(len(self.qidxs)))) - set([qidx_dataset_index]))
+            candidate_queries_dataset_indexes = list(set(range(len(self.qidxs))) - set([qidx_dataset_index]))
             
             candidate_distances = []
 

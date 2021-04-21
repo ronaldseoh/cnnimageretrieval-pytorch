@@ -252,12 +252,12 @@ class TuplesDataset(data.Dataset):
                 # Refresh just a single data point specified by target_data_index
                 idxs2images = set()
 
-                for qidx in target_data_idxs:
-                    idxs2images = idxs2images.union(set(self.nidxs[qidx]))
+                for idx in target_data_idxs:
+                    idxs2images = idxs2images.union(set(self.nidxs[idx]))
                     
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 
-                target_data_idxs = list(range(len(idxs2images)))
+                target_data_idxs = [self.idxs2images.index(im_index) for im_index in idxs2images]
             else:
                 # Rebuild all queries within the negative image pool
                 target_data_idxs = list(range(len(self.idxs2images)))
@@ -411,19 +411,22 @@ class TuplesDataset(data.Dataset):
         with torch.no_grad():
             if self.dense_refresh_batch_and_nearby >= 0 and len(batch_members) > 0:
                 
-                total_rebuild_indexes = set(batch_members)
-                
-                print("Batch indexes to rebuild (Before searching nearby):", str(total_rebuild_indexes))
+                queries_to_embed = set([self.qidxs[bm] for bm in batch_members])
+
+                print("Queries to embed (Before searching nearby):", str(queries_to_embed))
                 print()
                 
                 if self.dense_refresh_batch_and_nearby >= 1:
-                    for bq in batch_members:
+                    for bq in queries_to_embed:
                         nearby_queries = set(self.get_nearby_queries(bq, self.dense_refresh_batch_and_nearby))
                         print("Batch member", str(bq), " query neighbors:", str(nearby_queries))
-                        total_rebuild_indexes = total_rebuild_indexes.union(nearby_queries)
+                        queries_to_embed = queries_to_embed.union(nearby_queries)
                         
-                print("Batch indexes to rebuild (After searching nearby):", str(total_rebuild_indexes))
+                print("Queries to embed (After searching nearby):", str(queries_to_embed))
                 print()
+                
+                # Map the queries back to the dataset index
+                total_rebuild_indexes = [self.qidxs.index(q) for q in queries_to_embed]
                 
             else:
                 total_rebuild_indexes = [] # rebuild all
@@ -514,8 +517,8 @@ class TuplesDataset(data.Dataset):
         with torch.no_grad():
             avg_pos_distance = 0
 
-            for q in range(len(self.qidxs)):
-                avg_pos_distance += torch.pow(self.qvecs[:,q] - self.pvecs[:,q] + 1e-6, 2).sum(dim=0).sqrt()
+            for i in range(len(self.qidxs)):
+                avg_pos_distance += torch.pow(self.qvecs[:, i] - self.pvecs[:, i] + 1e-6, 2).sum(dim=0).sqrt()
                 
             avg_pos_distance /= len(self.qidxs)
                 
@@ -527,16 +530,18 @@ class TuplesDataset(data.Dataset):
     def get_nearby_queries(self, qidx, max_num):
             
         with torch.no_grad():
-            candidate_queries = list(set(range(len(self.qidxs))) - set([qidx]))
+            qidx_dataset_index = self.qidxs.index(qidx)
+
+            candidate_queries_dataset_indexes = list(set(range(len(self.qidxs)))) - set([qidx_dataset_index]))
             
             candidate_distances = []
 
-            for q in candidate_queries:
+            for i in candidate_queries_dataset_indexes:
                 candidate_distances.append(
-                    torch.pow(self.qvecs[:,qidx] - self.qvecs[:,q] + 1e-6, 2).sum(dim=0).sqrt())
+                    torch.pow(self.qvecs[:, qidx_dataset_index] - self.qvecs[:, i] + 1e-6, 2).sum(dim=0).sqrt())
                     
             candidate_distances = torch.tensor(candidate_distances)
             
             top_indexes = torch.argsort(candidate_distances)[:max_num]
             
-        return [candidate_queries[int(i)] for i in top_indexes]
+        return [self.qidxs[candidate_queries_dataset_indexes[int(ti)]] for ti in top_indexes]

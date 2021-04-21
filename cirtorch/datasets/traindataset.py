@@ -192,6 +192,8 @@ class TuplesDataset(data.Dataset):
                 ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
+            
+            assert len(loader) == len(target_data_idxs)
 
             # extract query vectors
             if self.qvecs is None:
@@ -271,6 +273,8 @@ class TuplesDataset(data.Dataset):
                 ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
+            
+            assert len(loader) == len(target_data_idxs)
 
             # extract negative pool vectors
             if self.poolvecs is None:
@@ -333,6 +337,9 @@ class TuplesDataset(data.Dataset):
                 ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
                 batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
+            
+            assert len(loader) == len(target_data_idxs)
+
             # extract positive image vectors
             if self.pvecs is None:
                 self.pvecs = torch.zeros(net.meta['outputdim'], len(self.pidxs)).cuda()
@@ -412,6 +419,7 @@ class TuplesDataset(data.Dataset):
             if self.dense_refresh_batch_and_nearby >= 0 and len(batch_members) > 0:
                 
                 queries_to_embed = set([self.qidxs[bm] for bm in batch_members])
+                queries_to_embed_with_nearby = queries_to_embed
 
                 print("Queries to embed (Before searching nearby):", str(queries_to_embed))
                 print()
@@ -420,13 +428,13 @@ class TuplesDataset(data.Dataset):
                     for bq in queries_to_embed:
                         nearby_queries = set(self.get_nearby_queries(bq, self.dense_refresh_batch_and_nearby))
                         print("Batch member", str(bq), " query neighbors:", str(nearby_queries))
-                        queries_to_embed = queries_to_embed.union(nearby_queries)
+                        queries_to_embed_with_nearby = queries_to_embed_with_nearby.union(nearby_queries)
                         
-                print("Queries to embed (After searching nearby):", str(queries_to_embed))
+                print("Queries to embed (After searching nearby):", str(queries_to_embed_with_nearby))
                 print()
                 
                 # Map the queries back to the dataset index
-                total_rebuild_indexes = [self.qidxs.index(q) for q in queries_to_embed]
+                total_rebuild_indexes = [self.qidxs.index(q) for q in queries_to_embed_with_nearby]
                 
             else:
                 total_rebuild_indexes = [] # rebuild all

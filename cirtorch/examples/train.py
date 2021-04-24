@@ -16,6 +16,8 @@ import torch.utils.data
 import torchvision.transforms as transforms
 import torchvision.models as models
 
+import wandb
+
 from cirtorch.networks.imageretrievalnet import init_network, extract_vectors
 from cirtorch.layers.loss import ContrastiveLoss, TripletLoss
 from cirtorch.datasets.datahelpers import collate_tuples, cid2filename
@@ -146,12 +148,21 @@ parser.add_argument('--calculate_positive_distance', action="store_true")
 parser.add_argument('--seed',
                     help='random seed',
                     default=0, type=int)
+                    
+parser.add_argument('--wandb', action="store_true")
 
 min_loss = float('inf')
 
 def main():
     global args, min_loss
     args = parser.parse_args()
+    
+    if args.wandb:
+        # initialize wandb
+        wandb.init(project='cnnimageretrieval-pytorch', entity='ronaldseoh')
+        
+        # save args provided for this experiment to wandb
+        wandb.config.update(args)
 
     # manually check if there are unknown test datasets
     for dataset in args.test_datasets.split(','):
@@ -321,6 +332,10 @@ def main():
     # evaluate the network before starting
     # this might not be necessary?
     test(args.test_datasets, model)
+    
+    if args.wandb:
+        # Start watching 'model' from wandb
+        wandb.watch(model)
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -331,6 +346,9 @@ def main():
 
         # train for one epoch on train set
         loss = train(train_loader, model, criterion, optimizer, epoch)
+        
+        if args.wandb:
+            wandb.log({"loss": loss, "epoch": epoch}) ## This is average loss
         
         # adjust learning rate for each epoch
         scheduler.step()
@@ -344,6 +362,9 @@ def main():
         if args.val:
             with torch.no_grad():
                 loss = validate(val_loader, model, criterion, epoch)
+                
+                if args.wandb:
+                    wandb.log({"validation_loss": loss, "epoch": epoch})
 
         # evaluate on test datasets every test_freq epochs
         if (epoch + 1) % args.test_freq == 0:
@@ -420,6 +441,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
             loss = criterion(output, target[q].cuda())
             losses.update(loss.item())
             loss.backward()
+            
+        if args.wandb:
+            wandb.log({"loss": losses.val, 'batch': i})
             
         # record which queries were in the batch
         batch_members = index

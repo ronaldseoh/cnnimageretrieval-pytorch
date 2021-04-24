@@ -369,7 +369,7 @@ def main():
         # evaluate on test datasets every test_freq epochs
         if (epoch + 1) % args.test_freq == 0:
             with torch.no_grad():
-                test(args.test_datasets, model)
+                test(args.test_datasets, model, wandb_enabled=args.wandb)
 
         # remember best loss and save checkpoint
         is_best = loss < min_loss

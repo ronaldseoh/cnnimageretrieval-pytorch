@@ -1,6 +1,7 @@
 import os
 import pickle
 import pdb
+import copy
 
 import torch
 import torch.utils.data as data
@@ -259,6 +260,10 @@ class TuplesDataset(data.Dataset):
                     
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 
+                # Since self.poolvecs is created with self.idx2images,
+                # we need to determine the exact locations within
+                # self.idx2images to where the indexes in the new idxs2images
+                # are located
                 target_data_idxs = [torch.nonzero(self.idxs2images == im_index, as_tuple=False).squeeze().item() for im_index in idxs2images]
             else:
                 # Rebuild all queries within the negative image pool
@@ -419,7 +424,7 @@ class TuplesDataset(data.Dataset):
             if self.dense_refresh_batch_and_nearby >= 0 and len(batch_members) > 0:
                 
                 queries_to_embed = set([self.qidxs[bm] for bm in batch_members])
-                queries_to_embed_with_nearby = queries_to_embed
+                queries_to_embed_with_nearby = copy.deepcopy(queries_to_embed)
 
                 print("Queries to embed (Before searching nearby):", str(queries_to_embed))
                 print()

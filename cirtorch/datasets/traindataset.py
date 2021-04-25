@@ -375,7 +375,7 @@ class TuplesDataset(data.Dataset):
             net.train()
 
     def create_epoch_tuples(self, net, batch_members=[],
-                            refresh_positive_pool=True,
+                            refresh_query_selection=True,
                             refresh_negative_pool=True,
                             refresh_query_vectors=True,
                             refresh_negative_pool_vectors=True,
@@ -401,7 +401,7 @@ class TuplesDataset(data.Dataset):
         ## ------------------------
 
         # draw qsize random queries for tuples
-        if refresh_positive_pool:
+        if refresh_query_selection:
             self.idxs2qpool = torch.randperm(len(self.qpool))[:self.qsize]
             
             self.qidxs = [self.qpool[i] for i in self.idxs2qpool]

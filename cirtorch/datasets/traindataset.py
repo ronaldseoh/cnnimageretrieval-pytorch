@@ -475,6 +475,9 @@ class TuplesDataset(data.Dataset):
 
             # extract negative pool vectors
             # If pool was refreshed, refresh_negative_vector=False should be ignored
+            if refresh_negative_pool:
+                refresh_negative_pool_vectors = True
+
             if refresh_negative_pool_vectors:
                 if refresh_negative_pool:
                     self.extract_negative_pool_vectors(
@@ -542,6 +545,8 @@ class TuplesDataset(data.Dataset):
 
                     r_others = len(ranks) - 1 # Start from the back
                     
+                    print(r_others)
+                    
                     if not 'clusters' in locals():
                         qcluster = self.clusters[self.qidxs[q]]
                         clusters = [qcluster]
@@ -556,6 +561,7 @@ class TuplesDataset(data.Dataset):
                             clusters.append(self.clusters[potential])
 
                         r_others -= 1
+                        print(r_others)
 
                     self.nidxs_others.append(nidxs_others)
                 

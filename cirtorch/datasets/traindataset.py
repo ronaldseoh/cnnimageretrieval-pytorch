@@ -269,9 +269,9 @@ class TuplesDataset(data.Dataset):
 
                 for idx in target_data_idxs:
                     if self.dense_refresh_furthest_negatives_up_to > 0:
-                        idxs2images = idxs2images.union(set(self.nidxs_others[idx]))
+                        idxs2images = idxs2images.union(set([im_index.item() for im_index in self.nidxs_others[idx]]))
                     else:
-                        idxs2images = idxs2images.union(set(self.nidxs[idx]))
+                        idxs2images = idxs2images.union(set([im_index.item() for im_index in self.nidxs[idx]]))
                     
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 

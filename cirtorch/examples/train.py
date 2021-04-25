@@ -329,13 +329,13 @@ def main():
             drop_last=True, collate_fn=collate_tuples
         )
 
-    # evaluate the network before starting
-    # this might not be necessary?
-    test(args.test_datasets, model)
-    
     if args.wandb:
         # Start watching 'model' from wandb
         wandb.watch(model)
+
+    # evaluate the network before starting
+    # this might not be necessary?
+    test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=-1)
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -369,7 +369,7 @@ def main():
         # evaluate on test datasets every test_freq epochs
         if (epoch + 1) % args.test_freq == 0:
             with torch.no_grad():
-                test(args.test_datasets, model, wandb_enabled=args.wandb)
+                test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=epoch)
 
         # remember best loss and save checkpoint
         is_best = loss < min_loss
@@ -469,9 +469,15 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)
-                    
+                
+                if args.wandb:
+                    wandb.log({"avg_neg_distance": avg_neg_distance, 'batch': i})
+                
                 if args.calculate_positive_distance:
                     avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
+                    
+                    if args.wandb:
+                        wandb.log({"avg_pos_distance": avg_pos_distance, 'batch': i})
                     
                 if args.save_embeds:
                     print(
@@ -547,7 +553,7 @@ def validate(val_loader, model, criterion, epoch):
 
     return losses.avg
 
-def test(datasets, net):
+def test(datasets, net, wandb_enabled=False, epoch=-1):
 
     print('>> Evaluating network on test datasets...')
 
@@ -623,7 +629,7 @@ def test(datasets, net):
         # search, rank, and print
         scores = np.dot(vecs.T, qvecs)
         ranks = np.argsort(-scores, axis=0)
-        compute_map_and_print(dataset, ranks, cfg['gnd'])
+        compute_map_and_print(dataset, ranks, cfg['gnd'], wandb_enabled, epoch=epoch)
     
         if Lw is not None:
             # whiten the vectors
@@ -633,7 +639,7 @@ def test(datasets, net):
             # search, rank, and print
             scores = np.dot(vecs_lw.T, qvecs_lw)
             ranks = np.argsort(-scores, axis=0)
-            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'])
+            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'], wandb_enabled, epoch=epoch)
         
         print('>> {}: elapsed time: {}'.format(dataset, htime(time.time()-start)))
 

@@ -155,7 +155,11 @@ parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
 parser.add_argument('--store_nidxs_others', action="store_true")
 
-parser.add_argument('--dense_refresh_close_negatives_up_to',
+parser.add_argument('--save_nidxs_others_up_to',
+                    help='how largr nidxs_others should be for each query.',
+                    default=-1, type=int)
+
+parser.add_argument('--dense_refresh_furthest_negatives_up_to',
                     help='how many close negatives to re-embed for each query.',
                     default=-1, type=int)
 
@@ -315,7 +319,7 @@ def main():
         dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,
         dense_refresh_batch_random=args.dense_refresh_batch_random,
         store_nidxs_others=args.store_nidxs_others,
-        dense_refresh_close_negatives_up_to=args.dense_refresh_close_negatives_up_to,
+        dense_refresh_furthest_negatives_up_to=args.dense_refresh_furthest_negatives_up_to,
     )
 
     train_loader = torch.utils.data.DataLoader(

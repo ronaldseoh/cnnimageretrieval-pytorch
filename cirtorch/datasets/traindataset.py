@@ -43,7 +43,7 @@ class TuplesDataset(data.Dataset):
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
                  dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
-                 store_nidxs_others=False, dense_refresh_close_negatives_up_to=-1):
+                 store_nidxs_others=False, save_nidxs_others_up_to=-1, dense_refresh_furthest_negatives_up_to=-1):
 
         if not (mode == 'train' or mode == 'val'):
             raise(RuntimeError("MODE should be either train or val, passed as string"))
@@ -119,10 +119,12 @@ class TuplesDataset(data.Dataset):
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
         self.dense_refresh_batch_random = dense_refresh_batch_random
         self.store_nidxs_others = store_nidxs_others
-        self.dense_refresh_close_negatives_up_to = dense_refresh_close_negatives_up_to
+        self.save_nidxs_others_up_to = save_nidxs_others_up_to
+        self.dense_refresh_furthest_negatives_up_to = dense_refresh_furthest_negatives_up_to
         
-        if self.dense_refresh_close_negatives_up_to > 0 and not self.store_nidxs_others:
+        if self.dense_refresh_furthest_negatives_up_to > 0 and not self.store_nidxs_others:
             self.store_nidxs_others = True
+            self.save_nidxs_others_up_to = self.dense_refresh_furthest_negatives_up_to
 
     def __getitem__(self, index):
         """
@@ -266,7 +268,7 @@ class TuplesDataset(data.Dataset):
                 idxs2images = set()
 
                 for idx in target_data_idxs:
-                    if self.dense_refresh_close_negatives_up_to > 0:
+                    if self.dense_refresh_furthest_negatives_up_to > 0:
                         idxs2images = idxs2images.union(set(self.nidxs_others[idx]))
                     else:
                         idxs2images = idxs2images.union(set(self.nidxs[idx]))
@@ -510,7 +512,6 @@ class TuplesDataset(data.Dataset):
                 # those images are potentially positive
                 qcluster = self.clusters[self.qidxs[q]]
                 clusters = [qcluster]
-                clusters_others = [qcluster]
 
                 nidxs = []
                 
@@ -538,14 +539,14 @@ class TuplesDataset(data.Dataset):
                 if self.store_nidxs_others:
                     r_others = len(ranks) - 1 # Start from the back
 
-                    while len(nidxs_others) < self.dense_refresh_close_negatives_up_to:
+                    while len(nidxs_others) < self.save_nidxs_others_up_to:
                         potential = self.idxs2images[ranks[r_others, q]]
 
                         # take at most one image from the same cluster
-                        if not self.clusters[potential] in clusters_others:
+                        if not self.clusters[potential] in clusters:
                             nidxs_others.append(potential)
 
-                            clusters_others.append(self.clusters[potential])
+                            clusters.append(self.clusters[potential])
 
                         r_others -= 1
 

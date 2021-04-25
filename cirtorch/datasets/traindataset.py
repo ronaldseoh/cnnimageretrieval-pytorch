@@ -503,7 +503,7 @@ class TuplesDataset(data.Dataset):
             n_ndist = torch.tensor(0).float().cuda()  # for statistics
 
             # selection of negative examples
-            if self.refresh_nidxs:
+            if refresh_nidxs:
                 self.nidxs = []
             
             if self.store_nidxs_others:

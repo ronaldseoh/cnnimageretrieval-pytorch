@@ -423,20 +423,6 @@ class TuplesDataset(data.Dataset):
             self.qidxs = [self.qpool[i] for i in self.idxs2qpool]
             self.pidxs = [self.ppool[i] for i in self.idxs2qpool]
 
-        ## ------------------------
-        ## SELECTING NEGATIVE PAIRS
-        ## ------------------------
-
-        # if nnum = 0 create dummy nidxs
-        # useful when only positives used for training
-        if refresh_negative_pool:
-            if self.nnum == 0:
-                self.nidxs = [[] for _ in range(len(self.qidxs))]
-                return 0
-
-            # draw poolsize random images for pool of negatives images
-            self.idxs2images = torch.randperm(len(self.images))[:self.poolsize]
-
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
             if self.dense_refresh_batch_and_nearby >= 0 and len(batch_members) > 0:
@@ -472,6 +458,20 @@ class TuplesDataset(data.Dataset):
                     save_embeds_step=save_embeds_step,
                     save_embeds_total_steps=save_embeds_total_steps,
                     save_embeds_path=save_embeds_path)
+                    
+            ## ------------------------
+            ## SELECTING NEGATIVE PAIRS
+            ## ------------------------
+
+            # if nnum = 0 create dummy nidxs
+            # useful when only positives used for training
+            if refresh_negative_pool:
+                if self.nnum == 0:
+                    self.nidxs = [[] for _ in range(len(self.qidxs))]
+                    return 0
+
+                # draw poolsize random images for pool of negatives images
+                self.idxs2images = torch.randperm(len(self.images))[:self.poolsize]
 
             # extract negative pool vectors
             # If pool was refreshed, refresh_negative_vector=False should be ignored
@@ -545,8 +545,6 @@ class TuplesDataset(data.Dataset):
 
                     r_others = len(ranks) - 1 # Start from the back
                     
-                    print(r_others)
-                    
                     if not 'clusters' in locals():
                         qcluster = self.clusters[self.qidxs[q]]
                         clusters = [qcluster]
@@ -561,7 +559,6 @@ class TuplesDataset(data.Dataset):
                             clusters.append(self.clusters[potential])
 
                         r_others -= 1
-                        print(r_others)
 
                     self.nidxs_others.append(nidxs_others)
                 

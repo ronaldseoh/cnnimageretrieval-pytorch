@@ -523,7 +523,7 @@ class TuplesDataset(data.Dataset):
 
                     r = 0
 
-                    while len(nidxs) < self.nnum:
+                    while (len(nidxs) < self.nnum) and (r < len(ranks)):
                         potential = self.idxs2images[ranks[r, q]]
 
                         # take at most one image from the same cluster
@@ -549,7 +549,7 @@ class TuplesDataset(data.Dataset):
                         qcluster = self.clusters[self.qidxs[q]]
                         clusters = [qcluster]
 
-                    while len(nidxs_others) < self.save_nidxs_others_up_to:
+                    while (len(nidxs_others) < self.save_nidxs_others_up_to) and (r_others >= 0):
                         potential = self.idxs2images[ranks[r_others, q]]
 
                         # take at most one image from the same cluster

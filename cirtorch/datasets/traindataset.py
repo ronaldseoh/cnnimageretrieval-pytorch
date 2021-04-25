@@ -510,18 +510,16 @@ class TuplesDataset(data.Dataset):
                 self.nidxs_others = []
 
             for q in range(len(self.qidxs)):
-                if self.refresh_nidxs:
+                if refresh_nidxs:
                     # do not use query cluster,
                     # those images are potentially positive
                     qcluster = self.clusters[self.qidxs[q]]
                     clusters = [qcluster]
 
                     nidxs = []
-                    
-                    if self.store_nidxs_others:
-                        nidxs_others = []
-                    
+
                     r = 0
+
                     while len(nidxs) < self.nnum:
                         potential = self.idxs2images[ranks[r, q]]
 
@@ -540,6 +538,8 @@ class TuplesDataset(data.Dataset):
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
                 if self.store_nidxs_others:
+                    nidxs_others = []
+
                     r_others = len(ranks) - 1 # Start from the back
 
                     while len(nidxs_others) < self.save_nidxs_others_up_to:

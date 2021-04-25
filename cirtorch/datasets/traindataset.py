@@ -43,7 +43,7 @@ class TuplesDataset(data.Dataset):
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
                  dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
-                 dense_refresh_save_nidxs_others=False, dense_refresh_close_negatives_up_to=-1):
+                 save_nidxs_others=False, dense_refresh_close_negatives_up_to=-1):
 
         if not (mode == 'train' or mode == 'val'):
             raise(RuntimeError("MODE should be either train or val, passed as string"))
@@ -118,11 +118,11 @@ class TuplesDataset(data.Dataset):
         self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
         self.dense_refresh_batch_random = dense_refresh_batch_random
-        self.dense_refresh_save_nidxs_others = dense_refresh_save_nidxs_others
+        self.save_nidxs_others = save_nidxs_others
         self.dense_refresh_close_negatives_up_to = dense_refresh_close_negatives_up_to
         
-        if self.dense_refresh_close_negatives_up_to > 0 and not self.dense_refresh_save_nidxs_others:
-            self.dense_refresh_save_nidxs_others = True
+        if self.dense_refresh_close_negatives_up_to > 0 and not self.save_nidxs_others:
+            self.save_nidxs_others = True
 
     def __getitem__(self, index):
         """
@@ -503,7 +503,7 @@ class TuplesDataset(data.Dataset):
             # selection of negative examples
             self.nidxs = []
             
-            if self.dense_refresh_save_nidxs_others:
+            if self.save_nidxs_others:
                 self.nidxs_others = []
 
             for q in range(len(self.qidxs)):
@@ -514,7 +514,7 @@ class TuplesDataset(data.Dataset):
 
                 nidxs = []
                 
-                if self.dense_refresh_save_nidxs_others:
+                if self.save_nidxs_others:
                     nidxs_others = []
                 
                 r = 0
@@ -535,7 +535,7 @@ class TuplesDataset(data.Dataset):
                 
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
-                if self.dense_refresh_save_nidxs_others:
+                if self.save_nidxs_others:
                     while r < len(ranks):
                         potential = self.idxs2images[ranks[r, q]]
 

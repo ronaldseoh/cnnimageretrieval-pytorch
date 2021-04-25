@@ -145,7 +145,7 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
             wandb.log({"test_mprE_" + dataset: mprE, "epoch": epoch})
             
             for i in np.arange(len(gnd_t)):
-                for j in kappas:
+                for j in np.arange(len(kappas)):
                     wandb.log({"test_prsE_" + str(i) + '_' + str(j) +'_' + dataset: prsE[i, j], "epoch": epoch})
 
         gnd_t = []
@@ -166,7 +166,7 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
             wandb.log({"test_mprM_" + dataset: mprM, "epoch": epoch})
 
             for i in np.arange(len(gnd_t)):
-                for j in kappas:
+                for j in np.arange(len(kappas)):
                     wandb.log({"test_prsM_" + str(i) + '_' + str(j) +'_' + dataset: prsM[i, j], "epoch": epoch})
 
         gnd_t = []
@@ -187,7 +187,7 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
             wandb.log({"test_mprH_" + dataset: mprH, "epoch": epoch})
 
             for i in np.arange(len(gnd_t)):
-                for j in kappas:
+                for j in np.arange(len(kappas)):
                     wandb.log({"test_prsH_" + str(i) + '_' + str(j) +'_' + dataset: prsH[i, j], "epoch": epoch})
 
         print('>> {}: mAP E: {}, M: {}, H: {}'.format(dataset, np.around(mapE*100, decimals=2), np.around(mapM*100, decimals=2), np.around(mapH*100, decimals=2)))

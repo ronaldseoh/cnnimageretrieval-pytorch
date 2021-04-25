@@ -153,6 +153,12 @@ parser.add_argument('--wandb', action="store_true")
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
+parser.add_argument('--store_nidxs_others', action="store_true")
+
+parser.add_argument('--dense_refresh_close_negatives_up_to',
+                    help='how many close negatives to re-embed for each query.',
+                    default=-1, type=int)
+
 min_loss = float('inf')
 
 def main():
@@ -307,7 +313,9 @@ def main():
         transform=transform,
         dense_refresh_batch_and_nearby=args.dense_refresh_batch_and_nearby,
         dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,
-        dense_refresh_batch_random=args.dense_refresh_batch_random
+        dense_refresh_batch_random=args.dense_refresh_batch_random,
+        store_nidxs_others=args.store_nidxs_others,
+        dense_refresh_close_negatives_up_to=args.dense_refresh_close_negatives_up_to,
     )
 
     train_loader = torch.utils.data.DataLoader(

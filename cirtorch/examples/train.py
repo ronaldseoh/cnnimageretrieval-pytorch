@@ -402,8 +402,14 @@ def train(train_loader, model, criterion, optimizer, epoch):
         save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
         save_embeds_path=save_embeds_dir)
         
+    if args.wandb:
+        wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch-1})
+
     if args.calculate_positive_distance:
         avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
+        
+        if args.wandb:
+            wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch-1})
 
     # switch to train mode
     model.train()
@@ -443,7 +449,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
             loss.backward()
             
         if args.wandb:
-            wandb.log({"loss": losses.val, 'batch': i})
+            wandb.log({"loss": losses.val, 'epoch': epoch, 'batch': i})
             
         # record which queries were in the batch
         batch_members = index
@@ -471,13 +477,13 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     save_embeds_path=save_embeds_dir)
                 
                 if args.wandb:
-                    wandb.log({"avg_neg_distance": avg_neg_distance, 'batch': i})
+                    wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'batch': i})
                 
                 if args.calculate_positive_distance:
                     avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
                     
                     if args.wandb:
-                        wandb.log({"avg_pos_distance": avg_pos_distance, 'batch': i})
+                        wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch, 'batch': i})
                     
                 if args.save_embeds:
                     print(

@@ -377,6 +377,8 @@ class TuplesDataset(data.Dataset):
     def create_epoch_tuples(self, net, batch_members=[],
                             refresh_positive_pool=True,
                             refresh_negative_pool=True,
+                            refresh_query_vectors=True,
+                            refresh_negative_pool_vectors=True,
                             save_embeds=False,
                             save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                             save_embeds_path=''):
@@ -445,24 +447,26 @@ class TuplesDataset(data.Dataset):
                 total_rebuild_indexes = [] # rebuild all
                         
             # extract query vectors
-            self.extract_query_vectors(
-                net,
-                target_data_idxs=total_rebuild_indexes,
-                save_embeds=save_embeds,
-                save_embeds_epoch=save_embeds_epoch,
-                save_embeds_step=save_embeds_step,
-                save_embeds_total_steps=save_embeds_total_steps,
-                save_embeds_path=save_embeds_path)
+            if refresh_query_vectors:
+                self.extract_query_vectors(
+                    net,
+                    target_data_idxs=total_rebuild_indexes,
+                    save_embeds=save_embeds,
+                    save_embeds_epoch=save_embeds_epoch,
+                    save_embeds_step=save_embeds_step,
+                    save_embeds_total_steps=save_embeds_total_steps,
+                    save_embeds_path=save_embeds_path)
 
             # extract negative pool vectors
-            self.extract_negative_pool_vectors(
-                net,
-                target_data_idxs=total_rebuild_indexes,
-                save_embeds=save_embeds,
-                save_embeds_epoch=save_embeds_epoch,
-                save_embeds_step=save_embeds_step,
-                save_embeds_total_steps=save_embeds_total_steps,
-                save_embeds_path=save_embeds_path)
+            if refresh_negative_vectors:
+                self.extract_negative_pool_vectors(
+                    net,
+                    target_data_idxs=total_rebuild_indexes,
+                    save_embeds=save_embeds,
+                    save_embeds_epoch=save_embeds_epoch,
+                    save_embeds_step=save_embeds_step,
+                    save_embeds_total_steps=save_embeds_total_steps,
+                    save_embeds_path=save_embeds_path)
 
             print('>> Searching for hard negatives...')
             # compute dot product scores and ranks on GPU

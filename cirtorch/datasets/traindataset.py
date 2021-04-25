@@ -532,12 +532,12 @@ class TuplesDataset(data.Dataset):
                     r += 1
 
                 self.nidxs.append(nidxs)
-                
+
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
-                r_others = len(ranks) - 1 # Start from the back
-                
                 if self.store_nidxs_others:
+                    r_others = len(ranks) - 1 # Start from the back
+
                     while len(nidxs_others) < self.dense_refresh_close_negatives_up_to:
                         potential = self.idxs2images[ranks[r_others, q]]
 

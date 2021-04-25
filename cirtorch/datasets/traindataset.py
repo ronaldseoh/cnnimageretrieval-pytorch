@@ -503,14 +503,14 @@ class TuplesDataset(data.Dataset):
             n_ndist = torch.tensor(0).float().cuda()  # for statistics
 
             # selection of negative examples
-            if refresh_nidxs:
+            if refresh_negative_pool or refresh_nidxs:
                 self.nidxs = []
             
             if self.store_nidxs_others:
                 self.nidxs_others = []
 
             for q in range(len(self.qidxs)):
-                if refresh_nidxs:
+                if refresh_negative_pool or refresh_nidxs:
                     # do not use query cluster,
                     # those images are potentially positive
                     qcluster = self.clusters[self.qidxs[q]]

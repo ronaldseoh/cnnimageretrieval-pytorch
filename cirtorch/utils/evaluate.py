@@ -133,14 +133,20 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
             g['ok'] = np.concatenate([gnd[i]['easy']])
             g['junk'] = np.concatenate([gnd[i]['junk'], gnd[i]['hard']])
             gnd_t.append(g)
+
         mapE, apsE, mprE, prsE = compute_map(ranks, gnd_t, kappas)
-        
-                
+
         if wandb_enabled:
             wandb.log({"test_mapE_" + dataset: mapE, "epoch": epoch})
-            wandb.log({"test_apsE_" + dataset: apsE, "epoch": epoch})
+ 
+            for i in np.arange(len(gnd_t)):
+                wandb.log({"test_apsE_" + str(i) + '_' + dataset: apsE[i], "epoch": epoch})
+
             wandb.log({"test_mprE_" + dataset: mprE, "epoch": epoch})
-            wandb.log({"test_prsE_" + dataset: prsE, "epoch": epoch})
+            
+            for i in np.arange(len(gnd_t)):
+                for j in kappas:
+                    wandb.log({"test_prsE_" + str(i) + '_' + str(j) +'_' + dataset: prsE[i, j], "epoch": epoch})
 
         gnd_t = []
         for i in range(len(gnd)):
@@ -148,13 +154,20 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
             g['ok'] = np.concatenate([gnd[i]['easy'], gnd[i]['hard']])
             g['junk'] = np.concatenate([gnd[i]['junk']])
             gnd_t.append(g)
+
         mapM, apsM, mprM, prsM = compute_map(ranks, gnd_t, kappas)
         
         if wandb_enabled:
             wandb.log({"test_mapM_" + dataset: mapM, "epoch": epoch})
-            wandb.log({"test_apsM_" + dataset: apsM, "epoch": epoch})
+
+            for i in np.arange(len(gnd_t)):
+                wandb.log({"test_apsM_" + str(i) + '_' + dataset: apsM[i], "epoch": epoch})
+
             wandb.log({"test_mprM_" + dataset: mprM, "epoch": epoch})
-            wandb.log({"test_prsM_" + dataset: prsM, "epoch": epoch})
+
+            for i in np.arange(len(gnd_t)):
+                for j in kappas:
+                    wandb.log({"test_prsM_" + str(i) + '_' + str(j) +'_' + dataset: prsM[i, j], "epoch": epoch})
 
         gnd_t = []
         for i in range(len(gnd)):
@@ -162,13 +175,20 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
             g['ok'] = np.concatenate([gnd[i]['hard']])
             g['junk'] = np.concatenate([gnd[i]['junk'], gnd[i]['easy']])
             gnd_t.append(g)
+
         mapH, apsH, mprH, prsH = compute_map(ranks, gnd_t, kappas)
         
         if wandb_enabled:
             wandb.log({"test_mapH_" + dataset: mapH, "epoch": epoch})
-            wandb.log({"test_apsH_" + dataset: apsH, "epoch": epoch})
+
+            for i in np.arange(len(gnd_t)):
+                wandb.log({"test_apsH_" + str(i) + '_' + dataset: apsH[i], "epoch": epoch})
+
             wandb.log({"test_mprH_" + dataset: mprH, "epoch": epoch})
-            wandb.log({"test_prsH_" + dataset: prsH, "epoch": epoch})
+
+            for i in np.arange(len(gnd_t)):
+                for j in kappas:
+                    wandb.log({"test_prsH_" + str(i) + '_' + str(j) +'_' + dataset: prsH[i, j], "epoch": epoch})
 
         print('>> {}: mAP E: {}, M: {}, H: {}'.format(dataset, np.around(mapE*100, decimals=2), np.around(mapM*100, decimals=2), np.around(mapH*100, decimals=2)))
         print('>> {}: mP@k{} E: {}, M: {}, H: {}'.format(dataset, kappas, np.around(mprE*100, decimals=2), np.around(mprM*100, decimals=2), np.around(mprH*100, decimals=2)))

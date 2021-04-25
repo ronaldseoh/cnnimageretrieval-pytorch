@@ -42,7 +42,8 @@ class TuplesDataset(data.Dataset):
     """
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
-                 dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1):
+                 dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
+                 dense_refresh_save_nidxs_others=False, dense_refresh_close_negatives_up_to=-1):
 
         if not (mode == 'train' or mode == 'val'):
             raise(RuntimeError("MODE should be either train or val, passed as string"))
@@ -99,6 +100,10 @@ class TuplesDataset(data.Dataset):
         self.qidxs = None
         self.pidxs = None
         self.nidxs = None
+        
+        # the rest of original similarity search results for the negative pool
+        # after limiting to the size of self.nnum
+        self.nidxs_others = None
 
         self.transform = transform
         self.loader = loader
@@ -113,6 +118,11 @@ class TuplesDataset(data.Dataset):
         self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
         self.dense_refresh_batch_random = dense_refresh_batch_random
+        self.dense_refresh_save_nidxs_others = dense_refresh_save_nidxs_others
+        self.dense_refresh_close_negatives_up_to = dense_refresh_close_negatives_up_to
+        
+        if self.dense_refresh_close_negatives_up_to > 0 and not self.dense_refresh_save_nidxs_others:
+            self.dense_refresh_save_nidxs_others = True
 
     def __getitem__(self, index):
         """
@@ -256,7 +266,11 @@ class TuplesDataset(data.Dataset):
                 idxs2images = set()
 
                 for idx in target_data_idxs:
-                    idxs2images = idxs2images.union(set(self.nidxs[idx]))
+                    if self.dense_refresh_close_negatives_up_to > 0:
+                        idxs2images = idxs2images.union(
+                            set(self.nidxs_others[idx][:self.dense_refresh_close_negatives_up_to]))
+                    else:
+                        idxs2images = idxs2images.union(set(self.nidxs[idx]))
                     
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 
@@ -485,25 +499,58 @@ class TuplesDataset(data.Dataset):
             scores, ranks = torch.sort(scores, dim=0, descending=True)
             avg_ndist = torch.tensor(0).float().cuda()  # for statistics
             n_ndist = torch.tensor(0).float().cuda()  # for statistics
+
             # selection of negative examples
             self.nidxs = []
+            
+            if self.dense_refresh_save_nidxs_others:
+                self.nidxs_others = []
+
             for q in range(len(self.qidxs)):
                 # do not use query cluster,
                 # those images are potentially positive
                 qcluster = self.clusters[self.qidxs[q]]
                 clusters = [qcluster]
+
                 nidxs = []
+                
+                if self.dense_refresh_save_nidxs_others:
+                    nidxs_others = []
+                
                 r = 0
                 while len(nidxs) < self.nnum:
                     potential = self.idxs2images[ranks[r, q]]
+
                     # take at most one image from the same cluster
                     if not self.clusters[potential] in clusters:
                         nidxs.append(potential)
+
                         clusters.append(self.clusters[potential])
                         avg_ndist += torch.pow(self.qvecs[:,q]-self.poolvecs[:,ranks[r, q]]+1e-6, 2).sum(dim=0).sqrt()
                         n_ndist += 1
+
                     r += 1
+
                 self.nidxs.append(nidxs)
+                
+                # while the original nidxs ends here, save the rest in `ranks`
+                # to nidxs_others
+                if self.dense_refresh_save_nidxs_others:
+                    while r < len(ranks):
+                        potential = self.idxs2images[ranks[r, q]]
+
+                        # take at most one image from the same cluster
+                        if not self.clusters[potential] in clusters:
+                            nidxs_others.append(potential)
+
+                            clusters.append(self.clusters[potential])
+
+                        r += 1
+                    
+                    # reverse nidxs_others as we want to look at the
+                    # closest negatives first
+                    nidxs_others.reverse()
+                    self.nidxs_others.append(nidxs_others)
                 
             if save_embeds:
                 # Need to save idxs2images, so that we could figure out the original index

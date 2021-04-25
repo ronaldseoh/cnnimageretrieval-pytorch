@@ -394,6 +394,7 @@ class TuplesDataset(data.Dataset):
                             refresh_negative_pool=True,
                             refresh_query_vectors=True,
                             refresh_negative_pool_vectors=True,
+                            refresh_nidxs=True,
                             save_embeds=False,
                             save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                             save_embeds_path=''):
@@ -502,37 +503,39 @@ class TuplesDataset(data.Dataset):
             n_ndist = torch.tensor(0).float().cuda()  # for statistics
 
             # selection of negative examples
-            self.nidxs = []
+            if self.refresh_nidxs:
+                self.nidxs = []
             
             if self.store_nidxs_others:
                 self.nidxs_others = []
 
             for q in range(len(self.qidxs)):
-                # do not use query cluster,
-                # those images are potentially positive
-                qcluster = self.clusters[self.qidxs[q]]
-                clusters = [qcluster]
+                if self.refresh_nidxs:
+                    # do not use query cluster,
+                    # those images are potentially positive
+                    qcluster = self.clusters[self.qidxs[q]]
+                    clusters = [qcluster]
 
-                nidxs = []
-                
-                if self.store_nidxs_others:
-                    nidxs_others = []
-                
-                r = 0
-                while len(nidxs) < self.nnum:
-                    potential = self.idxs2images[ranks[r, q]]
+                    nidxs = []
+                    
+                    if self.store_nidxs_others:
+                        nidxs_others = []
+                    
+                    r = 0
+                    while len(nidxs) < self.nnum:
+                        potential = self.idxs2images[ranks[r, q]]
 
-                    # take at most one image from the same cluster
-                    if not self.clusters[potential] in clusters:
-                        nidxs.append(potential)
+                        # take at most one image from the same cluster
+                        if not self.clusters[potential] in clusters:
+                            nidxs.append(potential)
 
-                        clusters.append(self.clusters[potential])
-                        avg_ndist += torch.pow(self.qvecs[:,q]-self.poolvecs[:,ranks[r, q]]+1e-6, 2).sum(dim=0).sqrt()
-                        n_ndist += 1
+                            clusters.append(self.clusters[potential])
+                            avg_ndist += torch.pow(self.qvecs[:,q]-self.poolvecs[:,ranks[r, q]]+1e-6, 2).sum(dim=0).sqrt()
+                            n_ndist += 1
 
-                    r += 1
+                        r += 1
 
-                self.nidxs.append(nidxs)
+                    self.nidxs.append(nidxs)
 
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others

@@ -267,8 +267,7 @@ class TuplesDataset(data.Dataset):
 
                 for idx in target_data_idxs:
                     if self.dense_refresh_close_negatives_up_to > 0:
-                        idxs2images = idxs2images.union(
-                            set(self.nidxs_others[idx][:self.dense_refresh_close_negatives_up_to]))
+                        idxs2images = idxs2images.union(set(self.nidxs_others[idx]))
                     else:
                         idxs2images = idxs2images.union(set(self.nidxs[idx]))
                     
@@ -511,6 +510,7 @@ class TuplesDataset(data.Dataset):
                 # those images are potentially positive
                 qcluster = self.clusters[self.qidxs[q]]
                 clusters = [qcluster]
+                clusters_others = [qcluster]
 
                 nidxs = []
                 
@@ -535,21 +535,20 @@ class TuplesDataset(data.Dataset):
                 
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
+                r_others = len(ranks) - 1 # Start from the back
+                
                 if self.store_nidxs_others:
-                    while r < len(ranks):
-                        potential = self.idxs2images[ranks[r, q]]
+                    while len(nidxs_others) < self.dense_refresh_close_negatives_up_to:
+                        potential = self.idxs2images[ranks[r_others, q]]
 
                         # take at most one image from the same cluster
-                        if not self.clusters[potential] in clusters:
+                        if not self.clusters[potential] in clusters_others:
                             nidxs_others.append(potential)
 
-                            clusters.append(self.clusters[potential])
+                            clusters_others.append(self.clusters[potential])
 
-                        r += 1
-                    
-                    # reverse nidxs_others as we want to look at the
-                    # closest negatives first
-                    nidxs_others.reverse()
+                        r_others -= 1
+
                     self.nidxs_others.append(nidxs_others)
                 
             if save_embeds:

@@ -459,7 +459,7 @@ class TuplesDataset(data.Dataset):
 
             # extract negative pool vectors
             # If pool was refreshed, refresh_negative_vector=False should be ignored
-            if refresh_negative_vectors:
+            if refresh_negative_pool_vectors:
                 if refresh_negative_pool:
                     self.extract_negative_pool_vectors(
                         net,

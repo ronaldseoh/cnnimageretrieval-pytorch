@@ -458,15 +458,26 @@ class TuplesDataset(data.Dataset):
                     save_embeds_path=save_embeds_path)
 
             # extract negative pool vectors
+            # If pool was refreshed, refresh_negative_vector=False should be ignored
             if refresh_negative_vectors:
-                self.extract_negative_pool_vectors(
-                    net,
-                    target_data_idxs=total_rebuild_indexes,
-                    save_embeds=save_embeds,
-                    save_embeds_epoch=save_embeds_epoch,
-                    save_embeds_step=save_embeds_step,
-                    save_embeds_total_steps=save_embeds_total_steps,
-                    save_embeds_path=save_embeds_path)
+                if refresh_negative_pool:
+                    self.extract_negative_pool_vectors(
+                        net,
+                        target_data_idxs=[], # Rebuild all when the negative pool was refreshed
+                        save_embeds=save_embeds,
+                        save_embeds_epoch=save_embeds_epoch,
+                        save_embeds_step=save_embeds_step,
+                        save_embeds_total_steps=save_embeds_total_steps,
+                        save_embeds_path=save_embeds_path)
+                else:
+                    self.extract_negative_pool_vectors(
+                        net,
+                        target_data_idxs=total_rebuild_indexes,
+                        save_embeds=save_embeds,
+                        save_embeds_epoch=save_embeds_epoch,
+                        save_embeds_step=save_embeds_step,
+                        save_embeds_total_steps=save_embeds_total_steps,
+                        save_embeds_path=save_embeds_path)
 
             print('>> Searching for hard negatives...')
             # compute dot product scores and ranks on GPU

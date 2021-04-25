@@ -151,6 +151,8 @@ parser.add_argument('--seed',
                     
 parser.add_argument('--wandb', action="store_true")
 
+parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
+
 min_loss = float('inf')
 
 def main():
@@ -472,6 +474,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     batch_members=batch_members,
                     refresh_query_selection=False,
                     refresh_negative_pool=False,
+                    refresh_negative_vectors=not args.do_not_refresh_negative_vectors,
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)

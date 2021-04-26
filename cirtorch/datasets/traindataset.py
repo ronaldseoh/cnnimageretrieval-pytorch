@@ -608,6 +608,8 @@ class TuplesDataset(data.Dataset):
         # Restore the training mode
         if was_training:
             net.train()
+            
+        print(net.training)
 
         return (avg_ndist/n_ndist).item()  # return average negative l2-distance
 

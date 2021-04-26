@@ -153,6 +153,10 @@ parser.add_argument('--wandb', action="store_true")
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
+parser.add_argument('--do_not_refresh_query_vectors', action="store_true")
+
+parser.add_argument('--do_not_refresh_nidxs_vectors', action="store_true")
+
 parser.add_argument('--do_not_refresh_nidxs', action="store_true")
 
 parser.add_argument('--store_nidxs_others', action="store_true")
@@ -487,9 +491,11 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     model,
                     batch_members=batch_members,
                     refresh_query_selection=False,
+                    refresh_query_vectors=not args.do_not_refresh_query_vectors,
                     refresh_negative_pool=False,
                     refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
                     refresh_nidxs=not args.do_not_refresh_nidxs,
+                    refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)

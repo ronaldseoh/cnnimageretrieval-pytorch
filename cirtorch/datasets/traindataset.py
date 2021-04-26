@@ -393,11 +393,11 @@ class TuplesDataset(data.Dataset):
 
     def create_epoch_tuples(self, net, batch_members=[],
                             refresh_query_selection=True,
-                            refresh_negative_pool=True,
                             refresh_query_vectors=True,
+                            refresh_negative_pool=True,
                             refresh_negative_pool_vectors=True,
-                            refresh_nidxs_vectors=True,
                             refresh_nidxs=True,
+                            refresh_nidxs_vectors=True,
                             save_embeds=False,
                             save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                             save_embeds_path=''):

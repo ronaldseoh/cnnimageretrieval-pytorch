@@ -540,8 +540,10 @@ class TuplesDataset(data.Dataset):
                 else:
                     current_nidxs = self.nidxs[q]
                     
-                    for pvi in current_nidxs:
-                        avg_ndist += torch.pow(self.qvecs[:, q]-self.poolvecs[:, pvi]+1e-6, 2).sum(dim=0).sqrt()
+                    for im_index in current_nidxs:
+                        idx_idx2images = torch.nonzero(self.idxs2images == im_index, as_tuple=False).squeeze().item()
+
+                        avg_ndist += torch.pow(self.qvecs[:, q]-self.poolvecs[:, idx_idx2images]+1e-6, 2).sum(dim=0).sqrt()
                         n_ndist += 1
 
                 # while the original nidxs ends here, save the rest in `ranks`

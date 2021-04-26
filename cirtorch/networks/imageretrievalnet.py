@@ -283,7 +283,7 @@ def extract_vectors(net, images, image_size, transform, bbxs=None, ms=[1], msp=1
     # creating dataset loader
     loader = torch.utils.data.DataLoader(
         ImagesFromList(root='', images=images, imsize=image_size, bbxs=bbxs, transform=transform),
-        batch_size=1, shuffle=False, num_workers=1, pin_memory=False
+        batch_size=1, shuffle=False, num_workers=8, pin_memory=True
     )
 
     # extracting vectors
@@ -333,7 +333,7 @@ def extract_regional_vectors(net, images, image_size, transform, bbxs=None, ms=[
     # creating dataset loader
     loader = torch.utils.data.DataLoader(
         ImagesFromList(root='', images=images, imsize=image_size, bbxs=bbxs, transform=transform),
-        batch_size=1, shuffle=False, num_workers=1, pin_memory=False
+        batch_size=1, shuffle=False, num_workers=8, pin_memory=True
     )
 
     # extracting vectors
@@ -367,7 +367,7 @@ def extract_local_vectors(net, images, image_size, transform, bbxs=None, ms=[1],
     # creating dataset loader
     loader = torch.utils.data.DataLoader(
         ImagesFromList(root='', images=images, imsize=image_size, bbxs=bbxs, transform=transform),
-        batch_size=1, shuffle=False, num_workers=1, pin_memory=False
+        batch_size=1, shuffle=False, num_workers=8, pin_memory=True
     )
 
     # extracting vectors

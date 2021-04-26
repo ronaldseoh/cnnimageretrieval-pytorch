@@ -248,6 +248,7 @@ class TuplesDataset(data.Dataset):
             net.train()
             
     def extract_negative_pool_vectors(self, net, target_data_idxs=[],
+                                      refresh_nidxs_vectors=True,
                                       save_embeds=False,
                                       save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                                       save_embeds_path=''):
@@ -271,7 +272,8 @@ class TuplesDataset(data.Dataset):
                     if self.dense_refresh_furthest_negatives_up_to > 0:
                         idxs2images = idxs2images.union(set([im_index.item() for im_index in self.nidxs_others[idx]]))
 
-                    idxs2images = idxs2images.union(set([im_index.item() for im_index in self.nidxs[idx]]))
+                    if refresh_nidxs_vectors:
+                        idxs2images = idxs2images.union(set([im_index.item() for im_index in self.nidxs[idx]]))
                     
                 print("Negative pool rebuild - idxs2images:", str(idxs2images))
 
@@ -394,6 +396,7 @@ class TuplesDataset(data.Dataset):
                             refresh_negative_pool=True,
                             refresh_query_vectors=True,
                             refresh_negative_pool_vectors=True,
+                            refresh_nidxs_vectors=True,
                             refresh_nidxs=True,
                             save_embeds=False,
                             save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
@@ -483,6 +486,7 @@ class TuplesDataset(data.Dataset):
                     self.extract_negative_pool_vectors(
                         net,
                         target_data_idxs=[], # Rebuild all when the negative pool was refreshed
+                        refresh_nidxs_vectors=refresh_nidxs_vectors,
                         save_embeds=save_embeds,
                         save_embeds_epoch=save_embeds_epoch,
                         save_embeds_step=save_embeds_step,
@@ -492,6 +496,7 @@ class TuplesDataset(data.Dataset):
                     self.extract_negative_pool_vectors(
                         net,
                         target_data_idxs=total_rebuild_indexes,
+                        refresh_nidxs_vectors=refresh_nidxs_vectors,
                         save_embeds=save_embeds,
                         save_embeds_epoch=save_embeds_epoch,
                         save_embeds_step=save_embeds_step,

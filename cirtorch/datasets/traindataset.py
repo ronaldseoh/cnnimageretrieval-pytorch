@@ -287,41 +287,43 @@ class TuplesDataset(data.Dataset):
                 target_data_idxs = list(range(len(self.idxs2images)))
                 idxs2images = self.idxs2images
             
-            images_to_rebuild = [self.images[i] for i in idxs2images]
-
-            print('>> Extracting descriptors for negative pool...')
-            # prepare negative pool data loader
-            loader = torch.utils.data.DataLoader(
-                ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
-                batch_size=1, shuffle=False, num_workers=8, pin_memory=True
-            )
-            
-            assert len(loader) == len(target_data_idxs)
-
-            # extract negative pool vectors
-            if self.poolvecs is None:
-                self.poolvecs = torch.zeros(net.meta['outputdim'], len(self.idxs2images)).cuda()
-
-            j = 1
-
-            for i, image in zip(target_data_idxs, loader):
-                self.poolvecs[:, i] = net(image.cuda()).data.squeeze()
-                print('\r>>>> {}/{} done...'.format(j, len(target_data_idxs)), end='')
-                j = j + 1
-            print('')
-            
-            # Serialize the query vectors
-            if save_embeds:
-                print(
-                    ">>>>> Epoch {} Step {}/{} pool embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+            if len(idxs2images) > 0:
                 
-                torch.save(
-                    self.poolvecs, os.path.join(save_embeds_path, '{}_pools.pt'.format(save_embeds_step)))
+                images_to_rebuild = [self.images[i] for i in idxs2images]
+
+                print('>> Extracting descriptors for negative pool...')
+                # prepare negative pool data loader
+                loader = torch.utils.data.DataLoader(
+                    ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
+                    batch_size=1, shuffle=False, num_workers=8, pin_memory=True
+                )
+                
+                assert len(loader) == len(target_data_idxs)
+
+                # extract negative pool vectors
+                if self.poolvecs is None:
+                    self.poolvecs = torch.zeros(net.meta['outputdim'], len(self.idxs2images)).cuda()
+
+                j = 1
+
+                for i, image in zip(target_data_idxs, loader):
+                    self.poolvecs[:, i] = net(image.cuda()).data.squeeze()
+                    print('\r>>>> {}/{} done...'.format(j, len(target_data_idxs)), end='')
+                    j = j + 1
+                print('')
+                
+                # Serialize the query vectors
+                if save_embeds:
+                    print(
+                        ">>>>> Epoch {} Step {}/{} pool embeddings serialization start.".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
                     
-                print(
-                    ">>>>> Epoch {} Step {}/{} pool embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
-                    
-                print()
+                    torch.save(
+                        self.poolvecs, os.path.join(save_embeds_path, '{}_pools.pt'.format(save_embeds_step)))
+                        
+                    print(
+                        ">>>>> Epoch {} Step {}/{} pool embeddings serialization complete!".format(save_embeds_epoch, save_embeds_step, save_embeds_total_steps))
+                        
+                    print()
 
         # Restore the training mode
         if was_training:

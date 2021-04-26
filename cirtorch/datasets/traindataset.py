@@ -537,6 +537,12 @@ class TuplesDataset(data.Dataset):
                         r += 1
 
                     self.nidxs.append(nidxs)
+                else:
+                    current_nidxs = self.nidxs[q]
+                    
+                    for pvi in current_nidxs:
+                        avg_ndist += torch.pow(self.qvecs[:, q]-self.poolvecs[:, pvi]+1e-6, 2).sum(dim=0).sqrt()
+                        n_ndist += 1
 
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
@@ -544,10 +550,9 @@ class TuplesDataset(data.Dataset):
                     nidxs_others = []
 
                     r_others = len(ranks) - 1 # Start from the back
-                    
-                    if not 'clusters' in locals():
-                        qcluster = self.clusters[self.qidxs[q]]
-                        clusters = [qcluster]
+
+                    qcluster = self.clusters[self.qidxs[q]]
+                    clusters = [qcluster]
 
                     while (len(nidxs_others) < self.save_nidxs_others_up_to) and (r_others >= 0):
                         potential = self.idxs2images[ranks[r_others, q]]

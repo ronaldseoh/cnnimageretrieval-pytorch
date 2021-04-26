@@ -330,7 +330,7 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=args.workers, pin_memory=True, sampler=None,
+        num_workers=1, pin_memory=False, sampler=None,
         drop_last=True, collate_fn=collate_tuples,
         prefetch_factor=1,
     )
@@ -346,7 +346,7 @@ def main():
         )
         val_loader = torch.utils.data.DataLoader(
             val_dataset, batch_size=args.batch_size, shuffle=False,
-            num_workers=args.workers, pin_memory=True,
+            num_workers=1, pin_memory=False,
             drop_last=True, collate_fn=collate_tuples
         )
 

@@ -331,8 +331,7 @@ def main():
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True, sampler=None,
-        drop_last=True, collate_fn=collate_tuples,
-        prefetch_factor=0,
+        drop_last=True, collate_fn=collate_tuples
     )
     if args.val:
         val_dataset = TuplesDataset(

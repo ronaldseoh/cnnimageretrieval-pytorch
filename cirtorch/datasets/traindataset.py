@@ -42,8 +42,9 @@ class TuplesDataset(data.Dataset):
     """
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
+                 save_nidxs_others_up_to=-1,
                  dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
-                 store_nidxs_others=False, save_nidxs_others_up_to=-1, dense_refresh_furthest_negatives_up_to=-1):
+                 dense_refresh_furthest_negatives_up_to=-1):
 
         if not (mode == 'train' or mode == 'val'):
             raise(RuntimeError("MODE should be either train or val, passed as string"))
@@ -114,16 +115,15 @@ class TuplesDataset(data.Dataset):
         self.qvecs = None
         self.poolvecs = None
         self.pvecs = None
-        
+
+        self.save_nidxs_others_up_to = save_nidxs_others_up_to
+
         self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
         self.dense_refresh_batch_random = dense_refresh_batch_random
-        self.store_nidxs_others = store_nidxs_others
-        self.save_nidxs_others_up_to = save_nidxs_others_up_to
         self.dense_refresh_furthest_negatives_up_to = dense_refresh_furthest_negatives_up_to
         
-        if self.dense_refresh_furthest_negatives_up_to > 0 and not self.store_nidxs_others:
-            self.store_nidxs_others = True
+        if self.dense_refresh_furthest_negatives_up_to > 0 and not self.save_nidxs_others_up_to > 0:
             self.save_nidxs_others_up_to = self.dense_refresh_furthest_negatives_up_to
 
     def __getitem__(self, index):
@@ -478,11 +478,10 @@ class TuplesDataset(data.Dataset):
                 # draw poolsize random images for pool of negatives images
                 self.idxs2images = torch.randperm(len(self.images))[:self.poolsize]
 
-            # extract negative pool vectors
-            # If pool was refreshed, refresh_negative_vector=False should be ignored
-            if refresh_negative_pool:
+                # If pool was refreshed, refresh_negative_vector=False should be ignored
                 refresh_negative_pool_vectors = True
 
+            # extract negative pool vectors
             if refresh_negative_pool_vectors:
                 if refresh_negative_pool:
                     self.extract_negative_pool_vectors(
@@ -555,7 +554,7 @@ class TuplesDataset(data.Dataset):
 
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
-                if self.store_nidxs_others:
+                if self.store_nidxs_others_up_to > 0:
                     nidxs_others = []
 
                     r_others = len(ranks) - 1 # Start from the back
@@ -563,7 +562,7 @@ class TuplesDataset(data.Dataset):
                     qcluster = self.clusters[self.qidxs[q]]
                     clusters = [qcluster]
 
-                    while (len(nidxs_others) < self.save_nidxs_others_up_to) and (r_others >= 0):
+                    while (len(nidxs_others) <= self.save_nidxs_others_up_to) and (r_others >= 0):
                         potential = self.idxs2images[ranks[r_others, q]]
 
                         # take at most one image from the same cluster

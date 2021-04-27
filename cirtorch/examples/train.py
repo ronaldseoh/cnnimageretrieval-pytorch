@@ -125,7 +125,18 @@ parser.add_argument('--resume', default='', type=str, metavar='FILENAME',
                     help='name of the latest checkpoint (default: None)')
                     
 # Efficient embedding refresh
+parser.add_argument('--seed',
+                    help='random seed',
+                    default=0, type=int)
+                    
+parser.add_argument('--wandb', action="store_true")
+
 parser.add_argument('--save_embeds', action="store_true")
+
+parser.add_argument('--save_nidxs_others_up_to', default=5, type=int, metavar='N',
+                    help='how large nidxs_others should be for each query.')
+
+parser.add_argument('--calculate_positive_distance', action="store_true")
 
 parser.add_argument('--dense_refresh_interval',
                     help='how often should we rebuild dense embeddings, in terms of training steps?',
@@ -143,13 +154,9 @@ parser.add_argument('--dense_refresh_batch_random',
                     help='refresh embeddings of randomly selected non-batch queries.',
                     default=-1, type=int)
                     
-parser.add_argument('--calculate_positive_distance', action="store_true")
-
-parser.add_argument('--seed',
-                    help='random seed',
-                    default=0, type=int)
-                    
-parser.add_argument('--wandb', action="store_true")
+parser.add_argument('--dense_refresh_furthest_negatives_up_to',
+                    help='how many close negatives to re-embed for each query.',
+                    default=-1, type=int)
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
@@ -159,15 +166,6 @@ parser.add_argument('--do_not_refresh_nidxs_vectors', action="store_true")
 
 parser.add_argument('--do_not_refresh_nidxs', action="store_true")
 
-parser.add_argument('--store_nidxs_others', action="store_true")
-
-parser.add_argument('--save_nidxs_others_up_to',
-                    help='how largr nidxs_others should be for each query.',
-                    default=-1, type=int)
-
-parser.add_argument('--dense_refresh_furthest_negatives_up_to',
-                    help='how many close negatives to re-embed for each query.',
-                    default=-1, type=int)
 
 min_loss = float('inf')
 
@@ -321,10 +319,10 @@ def main():
         qsize=args.query_size,
         poolsize=args.pool_size,
         transform=transform,
+        save_nidxs_others_up_to=args.save_nidxs_others_up_to,
         dense_refresh_batch_and_nearby=args.dense_refresh_batch_and_nearby,
         dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,
         dense_refresh_batch_random=args.dense_refresh_batch_random,
-        store_nidxs_others=args.store_nidxs_others,
         dense_refresh_furthest_negatives_up_to=args.dense_refresh_furthest_negatives_up_to,
     )
 

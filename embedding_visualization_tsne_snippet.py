@@ -3,7 +3,7 @@ import os
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-import sklearn
+from sklearn.manifold import TSNE
 import tqdm
 
 
@@ -20,7 +20,7 @@ plots_dir = os.path.join("__plots", "tsne")
 
 os.makedirs(plots_dir, exist_ok=True)
 
-for i in tqdm.tqdm(range(20)):
+for i in tqdm.tqdm(range(30)):
 
     batch_embeds_queries = torch.load(str(i) + '_queries.pt', map_location='cpu').T
     batch_embeds_positives = torch.load(str(i) + '_positive.pt', map_location='cpu').T
@@ -32,11 +32,13 @@ for i in tqdm.tqdm(range(20)):
     batch_idxs2images = torch.load(str(i) + '_idxs2images.pt', map_location='cpu')
     
     # Apply t-SNE
-    queries_tsne = sklearn.manifold.TSNE(n_components=2, n_jobs=-1).fit_transform(batch_embeds_queries)
-    positives_tsne = sklearn.manifold.TSNE(n_components=2, n_jobs=-1).fit_transform(batch_embeds_positives)
-    pools_tsne = sklearn.manifold.TSNE(n_components=2, n_jobs=-1).fit_transform(batch_embeds_pools)
+    print("Running t-SNE...")
+    queries_tsne = TSNE(n_components=2, n_jobs=-1).fit_transform(batch_embeds_queries)
+    positives_tsne = TSNE(n_components=2, n_jobs=-1).fit_transform(batch_embeds_positives)
+    pools_tsne = TSNE(n_components=2, n_jobs=-1).fit_transform(batch_embeds_pools)
 
     # Plot
+    print("Plotting started...")
     plt.figure(figsize=(10, 10))
   
     # Hard negatives

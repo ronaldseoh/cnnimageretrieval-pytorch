@@ -10,6 +10,7 @@ import tqdm
 from cirtorch.datasets.datahelpers import default_loader, imresize, cid2filename
 from cirtorch.datasets.genericdataset import ImagesFromList
 from cirtorch.utils.general import get_data_root
+from cirtorch.networks.imageretrievalnet import set_batchnorm_eval
 
 class TuplesDataset(data.Dataset):
     """Data loader that loads training and validation tuples of 
@@ -246,6 +247,7 @@ class TuplesDataset(data.Dataset):
         # Restore the training mode
         if was_training:
             net.train()
+            net.apply(set_batchnorm_eval)
             
     def extract_negative_pool_vectors(self, net, target_data_idxs=[],
                                       refresh_nidxs_vectors=True,
@@ -328,6 +330,7 @@ class TuplesDataset(data.Dataset):
         # Restore the training mode
         if was_training:
             net.train()
+            net.apply(set_batchnorm_eval)
             
     def extract_positive_vectors(self, net, target_data_idxs=[],
                                  save_embeds=False,
@@ -392,6 +395,7 @@ class TuplesDataset(data.Dataset):
         # Restore the training mode
         if was_training:
             net.train()
+            net.apply(set_batchnorm_eval)
 
     def create_epoch_tuples(self, net, batch_members=[],
                             refresh_query_selection=True,
@@ -608,6 +612,7 @@ class TuplesDataset(data.Dataset):
             # Restore the training mode
             if was_training:
                 net.train()
+                net.apply(set_batchnorm_eval)
 
             return (avg_ndist/n_ndist).item()  # return average negative l2-distance
 

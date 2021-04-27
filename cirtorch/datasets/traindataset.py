@@ -413,8 +413,8 @@ class TuplesDataset(data.Dataset):
                         print("Batch member", str(bq), " query neighbors:", str(nearby_queries))
                         queries_to_embed_with_nearby = queries_to_embed_with_nearby.union(nearby_queries)
                         
-                print("Queries to embed (After searching nearby):", str(queries_to_embed_with_nearby))
-                print()
+                    print("Queries to embed (After searching nearby):", str(queries_to_embed_with_nearby))
+                    print()
                 
                 # Map the queries back to the dataset index
                 total_rebuild_indexes = [self.qidxs.index(q) for q in queries_to_embed_with_nearby]

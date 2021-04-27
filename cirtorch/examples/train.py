@@ -18,7 +18,7 @@ import torchvision.models as models
 
 import wandb
 
-from cirtorch.networks.imageretrievalnet import init_network, extract_vectors
+from cirtorch.networks.imageretrievalnet import init_network, extract_vectors, set_batchnorm_eval
 from cirtorch.layers.loss import ContrastiveLoss, TripletLoss
 from cirtorch.datasets.datahelpers import collate_tuples, cid2filename
 from cirtorch.datasets.traindataset import TuplesDataset
@@ -698,22 +698,6 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-
-
-def set_batchnorm_eval(m):
-    classname = m.__class__.__name__
-    if classname.find('BatchNorm') != -1:
-        # freeze running mean and std:
-        # we do training one image at a time
-        # so the statistics would not be per batch
-        # hence we choose freezing (ie using imagenet statistics)
-        m.eval()
-        # # freeze parameters:
-        # # in fact no need to freeze scale and bias
-        # # they can be learned
-        # # that is why next two lines are commented
-        # for p in m.parameters():
-            # p.requires_grad = False
 
 
 if __name__ == '__main__':

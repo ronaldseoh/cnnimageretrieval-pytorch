@@ -324,7 +324,6 @@ def extract_ms(net, input, ms, msp):
 
     return v
 
-
 def extract_regional_vectors(net, images, image_size, transform, bbxs=None, ms=[1], msp=1, print_freq=10):
     # moving network to gpu and eval mode
     net.cuda()
@@ -358,7 +357,6 @@ def extract_regional_vectors(net, images, image_size, transform, bbxs=None, ms=[
 def extract_ssr(net, input):
     return net.pool(net.features(input), aggregate=False).squeeze(0).squeeze(-1).squeeze(-1).permute(1,0).cpu().data
 
-
 def extract_local_vectors(net, images, image_size, transform, bbxs=None, ms=[1], msp=1, print_freq=10):
     # moving network to gpu and eval mode
     net.cuda()
@@ -391,3 +389,18 @@ def extract_local_vectors(net, images, image_size, transform, bbxs=None, ms=[1],
 
 def extract_ssl(net, input):
     return net.norm(net.features(input)).squeeze(0).view(net.meta['outputdim'], -1).cpu().data
+
+def set_batchnorm_eval(m):
+    classname = m.__class__.__name__
+    if classname.find('BatchNorm') != -1:
+        # freeze running mean and std:
+        # we do training one image at a time
+        # so the statistics would not be per batch
+        # hence we choose freezing (ie using imagenet statistics)
+        m.eval()
+        # # freeze parameters:
+        # # in fact no need to freeze scale and bias
+        # # they can be learned
+        # # that is why next two lines are commented
+        # for p in m.parameters():
+            # p.requires_grad = False

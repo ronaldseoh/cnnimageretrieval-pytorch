@@ -198,7 +198,7 @@ class TuplesDataset(data.Dataset):
             # prepare query loader
             loader = torch.utils.data.DataLoader(
                 ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
-                batch_size=1, shuffle=False, num_workers=0, pin_memory=False
+                batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
             
             assert len(loader) == len(target_data_idxs)
@@ -281,7 +281,7 @@ class TuplesDataset(data.Dataset):
                 # prepare negative pool data loader
                 loader = torch.utils.data.DataLoader(
                     ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
-                    batch_size=1, shuffle=False, num_workers=0, pin_memory=False
+                    batch_size=1, shuffle=False, num_workers=8, pin_memory=True
                 )
                 
                 assert len(loader) == len(target_data_idxs)
@@ -336,7 +336,7 @@ class TuplesDataset(data.Dataset):
             # prepare positive image loader
             loader = torch.utils.data.DataLoader(
                 ImagesFromList(root='', images=images_to_rebuild, imsize=self.imsize, transform=self.transform),
-                batch_size=1, shuffle=False, num_workers=0, pin_memory=False
+                batch_size=1, shuffle=False, num_workers=8, pin_memory=True
             )
             
             assert len(loader) == len(target_data_idxs)

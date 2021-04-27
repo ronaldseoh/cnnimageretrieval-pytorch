@@ -328,7 +328,7 @@ def main():
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=0, pin_memory=False, sampler=None,
+        num_workers=0, pin_memory=True, sampler=None,
         drop_last=True, collate_fn=collate_tuples
     )
     if args.val:
@@ -343,7 +343,7 @@ def main():
         )
         val_loader = torch.utils.data.DataLoader(
             val_dataset, batch_size=args.batch_size, shuffle=False,
-            num_workers=0, pin_memory=False,
+            num_workers=args.workers, pin_memory=True,
             drop_last=True, collate_fn=collate_tuples
         )
 

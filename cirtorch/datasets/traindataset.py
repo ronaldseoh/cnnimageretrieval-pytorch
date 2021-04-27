@@ -42,7 +42,7 @@ class TuplesDataset(data.Dataset):
     """
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
-                 save_nidxs_others_up_to=-1,
+                 store_nidxs_others_up_to=-1,
                  dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
                  dense_refresh_furthest_negatives_up_to=-1):
 
@@ -116,15 +116,15 @@ class TuplesDataset(data.Dataset):
         self.poolvecs = None
         self.pvecs = None
 
-        self.save_nidxs_others_up_to = save_nidxs_others_up_to
+        self.store_nidxs_others_up_to = store_nidxs_others_up_to
 
         self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
         self.dense_refresh_batch_random = dense_refresh_batch_random
         self.dense_refresh_furthest_negatives_up_to = dense_refresh_furthest_negatives_up_to
         
-        if self.dense_refresh_furthest_negatives_up_to > 0 and not self.save_nidxs_others_up_to > 0:
-            self.save_nidxs_others_up_to = self.dense_refresh_furthest_negatives_up_to
+        if self.dense_refresh_furthest_negatives_up_to > 0 and not self.store_nidxs_others_up_to > 0:
+            self.store_nidxs_others_up_to = self.dense_refresh_furthest_negatives_up_to
 
     def __getitem__(self, index):
         """
@@ -516,7 +516,7 @@ class TuplesDataset(data.Dataset):
             if refresh_negative_pool or refresh_nidxs:
                 self.nidxs = []
             
-            if self.store_nidxs_others:
+            if self.store_nidxs_others_up_to > 0:
                 self.nidxs_others = []
 
             for q in range(len(self.qidxs)):
@@ -563,7 +563,7 @@ class TuplesDataset(data.Dataset):
                     qcluster = self.clusters[self.qidxs[q]]
                     clusters = [qcluster]
 
-                    while (len(nidxs_others) <= self.save_nidxs_others_up_to) and (r_others >= 0):
+                    while (len(nidxs_others) <= self.store_nidxs_others_up_to) and (r_others >= 0):
                         potential = self.idxs2images[ranks[r_others, q]]
 
                         # take at most one image from the same cluster

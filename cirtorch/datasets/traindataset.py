@@ -404,32 +404,33 @@ class TuplesDataset(data.Dataset):
                             save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                             save_embeds_path=''):
 
-        print('>> Creating tuples for an epoch of {}-{}...'.format(self.name, self.mode))
-        print(">>>> used network: ")
-        print(net.meta_repr())
-        
-        # prepare network
-        net.cuda()
-        
-        # if net was in training mode, temporarily switch to eval mode
-        was_training = net.training
-
-        if was_training:
-            net.eval()
-
-        ## ------------------------
-        ## SELECTING POSITIVE PAIRS
-        ## ------------------------
-
-        # draw qsize random queries for tuples
-        if refresh_query_selection:
-            self.idxs2qpool = torch.randperm(len(self.qpool))[:self.qsize]
-            
-            self.qidxs = [self.qpool[i] for i in self.idxs2qpool]
-            self.pidxs = [self.ppool[i] for i in self.idxs2qpool]
-
         # no gradients computed, to reduce memory and increase speed
         with torch.no_grad():
+
+            print('>> Creating tuples for an epoch of {}-{}...'.format(self.name, self.mode))
+            print(">>>> used network: ")
+            print(net.meta_repr())
+            
+            # prepare network
+            net.cuda()
+            
+            # if net was in training mode, temporarily switch to eval mode
+            was_training = net.training
+
+            if was_training:
+                net.eval()
+
+            ## ------------------------
+            ## SELECTING POSITIVE PAIRS
+            ## ------------------------
+
+            # draw qsize random queries for tuples
+            if refresh_query_selection:
+                self.idxs2qpool = torch.randperm(len(self.qpool))[:self.qsize]
+                
+                self.qidxs = [self.qpool[i] for i in self.idxs2qpool]
+                self.pidxs = [self.ppool[i] for i in self.idxs2qpool]
+
             if self.dense_refresh_batch_and_nearby >= 0 and len(batch_members) > 0:
                 
                 queries_to_embed = set([self.qidxs[bm] for bm in batch_members])
@@ -604,11 +605,11 @@ class TuplesDataset(data.Dataset):
             print('>>>> Average negative l2-distance: {:.2f}'.format(avg_ndist/n_ndist))
             print('>>>> Done')
 
-        # Restore the training mode
-        if was_training:
-            net.train()
+            # Restore the training mode
+            if was_training:
+                net.train()
 
-        return (avg_ndist/n_ndist).item()  # return average negative l2-distance
+            return (avg_ndist/n_ndist).item()  # return average negative l2-distance
 
     def calculate_average_positive_distance(self):
             

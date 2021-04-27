@@ -175,7 +175,9 @@ def main():
     
     if args.wandb:
         # initialize wandb
-        wandb.init(project='cnnimageretrieval-pytorch', entity='ronaldseoh')
+        wandb.init(
+            project='cnnimageretrieval-pytorch', name=args.directory,
+            entity='ronaldseoh')
         
         # save args provided for this experiment to wandb
         wandb.config.update(args)

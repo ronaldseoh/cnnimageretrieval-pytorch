@@ -133,7 +133,7 @@ parser.add_argument('--wandb', action="store_true")
 
 parser.add_argument('--save_embeds', action="store_true")
 
-parser.add_argument('--store_nidxs_others_up_to', default=5, type=int, metavar='N',
+parser.add_argument('--store_nidxs_others_up_to', default=0, type=int, metavar='N',
                     help='how large nidxs_others should be for each query.')
 
 parser.add_argument('--calculate_positive_distance', action="store_true")

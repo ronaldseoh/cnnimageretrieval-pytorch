@@ -493,44 +493,42 @@ def train(train_loader, model, criterion, optimizer, epoch, global_step):
             #       'Weight update performed'.format(
             #        epoch+1, i+1, len(train_loader)))
 
-            if args.dense_refresh_interval > 0 and (i + 1) % args.dense_refresh_interval == 0 and (i + 1) < len(train_loader):
+        if args.dense_refresh_interval > 0 and (i + 1) % args.dense_refresh_interval == 0 and (i + 1) < len(train_loader):
 
-                avg_neg_distance = train_loader.dataset.create_epoch_tuples(
-                    model,
-                    batch_members=batch_members,
-                    refresh_query_selection=False,
-                    refresh_query_vectors=not args.do_not_refresh_query_vectors,
-                    refresh_negative_pool=False,
-                    refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
-                    refresh_nidxs=not args.do_not_refresh_nidxs,
-                    refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
-                    save_embeds=args.save_embeds,
-                    save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
-                    save_embeds_path=save_embeds_dir)
+            avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+                model,
+                batch_members=batch_members,
+                refresh_query_selection=False,
+                refresh_query_vectors=not args.do_not_refresh_query_vectors,
+                refresh_negative_pool=False,
+                refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
+                refresh_nidxs=not args.do_not_refresh_nidxs,
+                refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
+                save_embeds=args.save_embeds,
+                save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
+                save_embeds_path=save_embeds_dir)
+            
+            if args.wandb:
+                wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'global_step': global_step})
+            
+            if args.calculate_positive_distance:
+                avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
                 
                 if args.wandb:
-                    wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'global_step': global_step})
+                    wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch, 'global_step': global_step})
                 
-                if args.calculate_positive_distance:
-                    avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
-                    
-                    if args.wandb:
-                        wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch, 'global_step': global_step})
-                    
-                if args.save_embeds:
-                    print(
-                        ">>>>> Epoch {} Step {}/{} batch member serialization start.".format(epoch, i, len(train_loader)-1))
+        if args.save_embeds:
+            print(
+                ">>>>> Epoch {} Step {}/{} batch member serialization start.".format(epoch, i, len(train_loader)-1))
 
-                    torch.save(
-                        batch_members, os.path.join(save_embeds_dir, '{}_batch_members.pt'.format(i)))
-     
-                    print(
-                        ">>>>> Epoch {} Step {}/{} batch member serialization complete!".format(epoch, i, len(train_loader)-1))
-                        
-                    print()
+            torch.save(
+                batch_members, os.path.join(save_embeds_dir, '{}_batch_members.pt'.format(i)))
+
+            print(
+                ">>>>> Epoch {} Step {}/{} batch member serialization complete!".format(epoch, i, len(train_loader)-1))
                 
-                # Reset batch_members
-                batch_members = []
+            print()
+                
 
         # measure elapsed time
         batch_time.update(time.time() - end)

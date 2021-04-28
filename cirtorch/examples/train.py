@@ -682,7 +682,7 @@ def test(datasets, net, wandb_enabled=False, epoch=-1):
         # search, rank, and print
         scores = np.dot(vecs.T, qvecs)
         ranks = np.argsort(-scores, axis=0)
-        compute_map_and_print(dataset, ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch)
+        compute_map_and_print(dataset, ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch, global_step=global_step)
     
         if Lw is not None:
             # whiten the vectors
@@ -692,7 +692,7 @@ def test(datasets, net, wandb_enabled=False, epoch=-1):
             # search, rank, and print
             scores = np.dot(vecs_lw.T, qvecs_lw)
             ranks = np.argsort(-scores, axis=0)
-            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch)
+            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch, global_step=global_step)
         
         print('>> {}: elapsed time: {}'.format(dataset, htime(time.time()-start)))
 

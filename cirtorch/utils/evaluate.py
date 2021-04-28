@@ -112,10 +112,8 @@ def compute_map(ranks, gnd, kappas=[]):
     return map, aps, pr, prs
 
 
-def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=False, epoch=-1):
-    
-    global global_step
-    
+def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=False, epoch=-1, global_step=-1):
+
     # old evaluation protocol
     if dataset.startswith('oxford5k') or dataset.startswith('paris6k'):
         map, aps, _, _ = compute_map(ranks, gnd)

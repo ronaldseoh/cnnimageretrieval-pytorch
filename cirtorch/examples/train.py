@@ -383,7 +383,7 @@ def main():
         # evaluate on validation set
         if args.val:
             with torch.no_grad():
-                loss = validate(val_loader, model, criterion, epoch)
+                loss = validate(val_loader, model, criterion, epoch, global_step=global_step)
                 
                 if args.wandb:
                     wandb.log({"loss_validation": loss, "epoch": epoch, "global_step": global_step})
@@ -545,12 +545,21 @@ def train(train_loader, model, criterion, optimizer, epoch, global_step):
     return losses.avg
 
 
-def validate(val_loader, model, criterion, epoch):
+def validate(val_loader, model, criterion, epoch, global_step):
     batch_time = AverageMeter()
     losses = AverageMeter()
 
     # create tuples for validation
     avg_neg_distance = val_loader.dataset.create_epoch_tuples(model)
+    
+    if args.wandb:
+        wandb.log({"avg_neg_distance_validation": avg_neg_distance, 'epoch': epoch, "global_step": global_step})
+
+    if args.calculate_positive_distance:
+        avg_pos_distance = val_loader.dataset.calculate_average_positive_distance()
+        
+        if args.wandb:
+            wandb.log({"avg_pos_distance_validation": avg_pos_distance, 'epoch': epoch, "global_step": global_step})
 
     # switch to evaluate mode
     model.eval()

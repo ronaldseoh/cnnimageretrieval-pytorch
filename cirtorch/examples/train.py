@@ -493,7 +493,7 @@ def train(train_loader, model, criterion, optimizer, epoch, global_step):
             #       'Weight update performed'.format(
             #        epoch+1, i+1, len(train_loader)))
 
-            if args.dense_refresh_interval > 0 and (i + 1) % args.dense_refresh_interval == 0:
+            if args.dense_refresh_interval > 0 and (i + 1) % args.dense_refresh_interval == 0 and (i + 1) < len(train_loader):
 
                 avg_neg_distance = train_loader.dataset.create_epoch_tuples(
                     model,

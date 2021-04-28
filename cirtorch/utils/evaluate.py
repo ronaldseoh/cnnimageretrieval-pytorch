@@ -112,15 +112,15 @@ def compute_map(ranks, gnd, kappas=[]):
     return map, aps, pr, prs
 
 
-def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=False, epoch=-1):
+def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=False, epoch=-1, global_step=global_step):
     
     # old evaluation protocol
     if dataset.startswith('oxford5k') or dataset.startswith('paris6k'):
         map, aps, _, _ = compute_map(ranks, gnd)
         
         if wandb_enabled:
-            wandb.log({"test_map_" + dataset: map, "epoch": epoch})
-            wandb.log({"test_aps_" + dataset: aps, "epoch": epoch})
+            wandb.log({"test_map_" + dataset: map, "epoch": epoch, "global_step": global_step})
+            wandb.log({"test_aps_" + dataset: aps, "epoch": epoch, "global_step": global_step})
 
         print('>> {}: mAP {:.2f}'.format(dataset, np.around(map*100, decimals=2)))
 
@@ -137,16 +137,16 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
         mapE, apsE, mprE, prsE = compute_map(ranks, gnd_t, kappas)
 
         if wandb_enabled:
-            wandb.log({"test_mapE_" + dataset: mapE, "epoch": epoch})
+            wandb.log({"test_mapE_" + dataset: mapE, "epoch": epoch, "global_step": global_step})
  
             for i in np.arange(len(gnd_t)):
-                wandb.log({"test_apsE_" + str(i) + '_' + dataset: apsE[i], "epoch": epoch})
+                wandb.log({"test_apsE_" + str(i) + '_' + dataset: apsE[i], "epoch": epoch, "global_step": global_step})
 
-            wandb.log({"test_mprE_" + dataset: mprE, "epoch": epoch})
+            wandb.log({"test_mprE_" + dataset: mprE, "epoch": epoch, "global_step": global_step})
             
             for i in np.arange(len(gnd_t)):
                 for j in np.arange(len(kappas)):
-                    wandb.log({"test_prsE_" + str(i) + '_' + str(j) +'_' + dataset: prsE[i, j], "epoch": epoch})
+                    wandb.log({"test_prsE_" + str(i) + '_' + str(j) +'_' + dataset: prsE[i, j], "epoch": epoch, "global_step": global_step})
 
         gnd_t = []
         for i in range(len(gnd)):
@@ -158,16 +158,16 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
         mapM, apsM, mprM, prsM = compute_map(ranks, gnd_t, kappas)
         
         if wandb_enabled:
-            wandb.log({"test_mapM_" + dataset: mapM, "epoch": epoch})
+            wandb.log({"test_mapM_" + dataset: mapM, "epoch": epoch, "global_step": global_step})
 
             for i in np.arange(len(gnd_t)):
-                wandb.log({"test_apsM_" + str(i) + '_' + dataset: apsM[i], "epoch": epoch})
+                wandb.log({"test_apsM_" + str(i) + '_' + dataset: apsM[i], "epoch": epoch, "global_step": global_step})
 
-            wandb.log({"test_mprM_" + dataset: mprM, "epoch": epoch})
+            wandb.log({"test_mprM_" + dataset: mprM, "epoch": epoch, "global_step": global_step})
 
             for i in np.arange(len(gnd_t)):
                 for j in np.arange(len(kappas)):
-                    wandb.log({"test_prsM_" + str(i) + '_' + str(j) +'_' + dataset: prsM[i, j], "epoch": epoch})
+                    wandb.log({"test_prsM_" + str(i) + '_' + str(j) +'_' + dataset: prsM[i, j], "epoch": epoch, "global_step": global_step})
 
         gnd_t = []
         for i in range(len(gnd)):
@@ -179,16 +179,16 @@ def compute_map_and_print(dataset, ranks, gnd, kappas=[1, 5, 10], wandb_enabled=
         mapH, apsH, mprH, prsH = compute_map(ranks, gnd_t, kappas)
         
         if wandb_enabled:
-            wandb.log({"test_mapH_" + dataset: mapH, "epoch": epoch})
+            wandb.log({"test_mapH_" + dataset: mapH, "epoch": epoch, "global_step": global_step})
 
             for i in np.arange(len(gnd_t)):
-                wandb.log({"test_apsH_" + str(i) + '_' + dataset: apsH[i], "epoch": epoch})
+                wandb.log({"test_apsH_" + str(i) + '_' + dataset: apsH[i], "epoch": epoch, "global_step": global_step})
 
-            wandb.log({"test_mprH_" + dataset: mprH, "epoch": epoch})
+            wandb.log({"test_mprH_" + dataset: mprH, "epoch": epoch, "global_step": global_step})
 
             for i in np.arange(len(gnd_t)):
                 for j in np.arange(len(kappas)):
-                    wandb.log({"test_prsH_" + str(i) + '_' + str(j) +'_' + dataset: prsH[i, j], "epoch": epoch})
+                    wandb.log({"test_prsH_" + str(i) + '_' + str(j) +'_' + dataset: prsH[i, j], "epoch": epoch, "global_step": global_step})
 
         print('>> {}: mAP E: {}, M: {}, H: {}'.format(dataset, np.around(mapE*100, decimals=2), np.around(mapM*100, decimals=2), np.around(mapH*100, decimals=2)))
         print('>> {}: mP@k{} E: {}, M: {}, H: {}'.format(dataset, kappas, np.around(mprE*100, decimals=2), np.around(mprM*100, decimals=2), np.around(mprH*100, decimals=2)))

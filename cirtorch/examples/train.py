@@ -352,10 +352,12 @@ def main():
     if args.wandb:
         # Start watching 'model' from wandb
         wandb.watch(model)
+        
+    global_step = -1
 
     # evaluate the network before starting
     # this might not be necessary?
-    test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=-1)
+    test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=-1, global_step=global_step)
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -365,10 +367,10 @@ def main():
         torch.cuda.manual_seed_all(args.seed + epoch)
 
         # train for one epoch on train set
-        loss = train(train_loader, model, criterion, optimizer, epoch)
+        loss = train(train_loader, model, criterion, optimizer, epoch, global_step=global_step)
         
         if args.wandb:
-            wandb.log({"loss": loss, "epoch": epoch}) ## This is average loss
+            wandb.log({"loss_avg": loss, "epoch": epoch, "global_step": global_step}) ## This is average loss
         
         # adjust learning rate for each epoch
         scheduler.step()
@@ -384,16 +386,19 @@ def main():
                 loss = validate(val_loader, model, criterion, epoch)
                 
                 if args.wandb:
-                    wandb.log({"validation_loss": loss, "epoch": epoch})
+                    wandb.log({"loss_validation": loss, "epoch": epoch, "global_step": global_step})
 
         # evaluate on test datasets every test_freq epochs
         if (epoch + 1) % args.test_freq == 0:
             with torch.no_grad():
-                test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=epoch)
+                test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=epoch, global_step=global_step)
 
         # remember best loss and save checkpoint
         is_best = loss < min_loss
         min_loss = min(loss, min_loss)
+        
+        if is_best:
+            print("Epoch", str(epoch + 1), "lower loss:", min_loss)
 
         save_checkpoint({
             'epoch': epoch + 1,
@@ -403,7 +408,7 @@ def main():
             'optimizer' : optimizer.state_dict(),
         }, is_best, args.directory)
 
-def train(train_loader, model, criterion, optimizer, epoch):
+def train(train_loader, model, criterion, optimizer, epoch, global_step):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -423,13 +428,13 @@ def train(train_loader, model, criterion, optimizer, epoch):
         save_embeds_path=save_embeds_dir)
         
     if args.wandb:
-        wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch-1})
+        wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch-1, "global_step": global_step})
 
     if args.calculate_positive_distance:
         avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
         
         if args.wandb:
-            wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch-1})
+            wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch-1, "global_step": global_step})
 
     # switch to train mode
     model.train()
@@ -468,8 +473,11 @@ def train(train_loader, model, criterion, optimizer, epoch):
             losses.update(loss.item())
             loss.backward()
             
+        # Update global_step counter
+        global_step += 1
+            
         if args.wandb:
-            wandb.log({"loss": losses.val, 'epoch': epoch, 'batch': i})
+            wandb.log({"loss": losses.val, 'epoch': epoch, 'global_step': global_step})
             
         # record which queries were in the batch
         batch_members = index
@@ -501,13 +509,13 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     save_embeds_path=save_embeds_dir)
                 
                 if args.wandb:
-                    wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'batch': i})
+                    wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'global_step': global_step})
                 
                 if args.calculate_positive_distance:
                     avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
                     
                     if args.wandb:
-                        wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch, 'batch': i})
+                        wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch, 'global_step': global_step})
                     
                 if args.save_embeds:
                     print(
@@ -583,7 +591,7 @@ def validate(val_loader, model, criterion, epoch):
 
     return losses.avg
 
-def test(datasets, net, wandb_enabled=False, epoch=-1):
+def test(datasets, net, wandb_enabled=False, epoch=-1, global_step=-1):
 
     print('>> Evaluating network on test datasets...')
 
@@ -659,7 +667,7 @@ def test(datasets, net, wandb_enabled=False, epoch=-1):
         # search, rank, and print
         scores = np.dot(vecs.T, qvecs)
         ranks = np.argsort(-scores, axis=0)
-        compute_map_and_print(dataset, ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch)
+        compute_map_and_print(dataset, ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch, global_step=global_step)
     
         if Lw is not None:
             # whiten the vectors
@@ -669,7 +677,7 @@ def test(datasets, net, wandb_enabled=False, epoch=-1):
             # search, rank, and print
             scores = np.dot(vecs_lw.T, qvecs_lw)
             ranks = np.argsort(-scores, axis=0)
-            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch)
+            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch, global_step=global_step)
         
         print('>> {}: elapsed time: {}'.format(dataset, htime(time.time()-start)))
 

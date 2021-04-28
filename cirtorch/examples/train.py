@@ -169,8 +169,10 @@ parser.add_argument('--do_not_refresh_nidxs', action="store_true")
 
 min_loss = float('inf')
 
+global_step = -1
+
 def main():
-    global args, min_loss
+    global args, min_loss, global_step
     args = parser.parse_args()
     
     if args.wandb:
@@ -352,12 +354,10 @@ def main():
     if args.wandb:
         # Start watching 'model' from wandb
         wandb.watch(model)
-        
-    global_step = -1
 
     # evaluate the network before starting
     # this might not be necessary?
-    test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=-1, global_step=global_step)
+    test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=-1)
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -367,7 +367,7 @@ def main():
         torch.cuda.manual_seed_all(args.seed + epoch)
 
         # train for one epoch on train set
-        loss = train(train_loader, model, criterion, optimizer, epoch, global_step=global_step)
+        loss = train(train_loader, model, criterion, optimizer, epoch)
         
         if args.wandb:
             wandb.log({"loss_avg": loss, "epoch": epoch, "global_step": global_step}) ## This is average loss
@@ -383,7 +383,7 @@ def main():
         # evaluate on validation set
         if args.val:
             with torch.no_grad():
-                loss = validate(val_loader, model, criterion, epoch, global_step=global_step)
+                loss = validate(val_loader, model, criterion, epoch)
                 
                 if args.wandb:
                     wandb.log({"loss_validation": loss, "epoch": epoch, "global_step": global_step})
@@ -391,7 +391,7 @@ def main():
         # evaluate on test datasets every test_freq epochs
         if (epoch + 1) % args.test_freq == 0:
             with torch.no_grad():
-                test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=epoch, global_step=global_step)
+                test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=epoch)
 
         # remember best loss and save checkpoint
         is_best = loss < min_loss
@@ -408,7 +408,10 @@ def main():
             'optimizer' : optimizer.state_dict(),
         }, is_best, args.directory)
 
-def train(train_loader, model, criterion, optimizer, epoch, global_step):
+def train(train_loader, model, criterion, optimizer, epoch):
+    
+    global global_step
+
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -535,17 +538,20 @@ def train(train_loader, model, criterion, optimizer, epoch, global_step):
         end = time.time()
 
         if (i+1) % args.print_freq == 0 or i == 0 or (i+1) == len(train_loader):
-            print('>> Train: [{0}][{1}/{2}]\t'
+            print('>> Train: [{0}][{1}/{2}][{3}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
-                   epoch+1, i+1, len(train_loader), batch_time=batch_time,
+                   epoch+1, i+1, len(train_loader), global_step, batch_time=batch_time,
                    data_time=data_time, loss=losses))
 
     return losses.avg
 
 
-def validate(val_loader, model, criterion, epoch, global_step):
+def validate(val_loader, model, criterion, epoch):
+    
+    global global_step
+
     batch_time = AverageMeter()
     losses = AverageMeter()
 
@@ -591,14 +597,16 @@ def validate(val_loader, model, criterion, epoch, global_step):
         end = time.time()
 
         if (i+1) % args.print_freq == 0 or i == 0 or (i+1) == len(val_loader):
-            print('>> Val: [{0}][{1}/{2}]\t'
+            print('>> Val: [{0}][{1}/{2}][{3}]\t'
                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t'
                   'Loss {loss.val:.4f} ({loss.avg:.4f})'.format(
-                   epoch+1, i+1, len(val_loader), batch_time=batch_time, loss=losses))
+                   epoch+1, i+1, len(val_loader), global_step, batch_time=batch_time, loss=losses))
 
     return losses.avg
 
-def test(datasets, net, wandb_enabled=False, epoch=-1, global_step=-1):
+def test(datasets, net, wandb_enabled=False, epoch=-1):
+    
+    global global_step
 
     print('>> Evaluating network on test datasets...')
 
@@ -674,7 +682,7 @@ def test(datasets, net, wandb_enabled=False, epoch=-1, global_step=-1):
         # search, rank, and print
         scores = np.dot(vecs.T, qvecs)
         ranks = np.argsort(-scores, axis=0)
-        compute_map_and_print(dataset, ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch, global_step=global_step)
+        compute_map_and_print(dataset, ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch)
     
         if Lw is not None:
             # whiten the vectors
@@ -684,7 +692,7 @@ def test(datasets, net, wandb_enabled=False, epoch=-1, global_step=-1):
             # search, rank, and print
             scores = np.dot(vecs_lw.T, qvecs_lw)
             ranks = np.argsort(-scores, axis=0)
-            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch, global_step=global_step)
+            compute_map_and_print(dataset + ' + whiten', ranks, cfg['gnd'], wandb_enabled=wandb_enabled, epoch=epoch)
         
         print('>> {}: elapsed time: {}'.format(dataset, htime(time.time()-start)))
 

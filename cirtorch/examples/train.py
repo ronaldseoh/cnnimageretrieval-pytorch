@@ -171,6 +171,10 @@ parser.add_argument('--dense_refresh_batch_random',
 parser.add_argument('--dense_refresh_furthest_negatives_up_to',
                     help='how many furthest negatives to re-embed for each query.',
                     default=-1, type=int)
+                    
+parser.add_argument('--dense_refresh_defer_until_epoch',
+                    help='The epoch until which we could defer the index refresh process.',
+                    default=-1, type=int)
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
@@ -533,7 +537,10 @@ def train(train_loader, model, criterion, optimizer, epoch):
             #       'Weight update performed'.format(
             #        epoch+1, i+1, len(train_loader)))
 
-        if args.dense_refresh_interval > 0 and (i + 1) % args.dense_refresh_interval == 0 and (i + 1) < len(train_loader):
+        if args.dense_refresh_interval > 0 and \
+           (i + 1) % args.dense_refresh_interval == 0 and \
+           (i + 1) < len(train_loader) and \
+           epoch > args.dense_refresh_defer_until_epoch:
 
             avg_neg_distance = train_loader.dataset.create_epoch_tuples(
                 model,

@@ -5,6 +5,7 @@ import time
 import math
 import pickle
 import pdb
+import random
 
 import numpy as np
 
@@ -27,6 +28,19 @@ from cirtorch.utils.download import download_train, download_test
 from cirtorch.utils.whiten import whitenlearn, whitenapply
 from cirtorch.utils.evaluate import compute_map_and_print
 from cirtorch.utils.general import get_data_root, htime
+
+# cuBLAS reproducibility
+# https://docs.nvidia.com/cuda/cublas/index.html#cublasApi_reproducibility
+os.environ['CUBLAS_WORKSPACE_CONFIG'] = ":4096:8"
+torch.set_deterministic(True)
+
+# Set this to True to make your output immediately reproducible
+# Note: https://pytorch.org/docs/stable/notes/randomness.html
+torch.backends.cudnn.deterministic = True
+
+# Disable 'benchmark' mode: Set this False if you want to measure running times more fairly
+# Note: https://discuss.pytorch.org/t/what-does-torch-backends-cudnn-benchmark-do/5936
+torch.backends.cudnn.benchmark = False
 
 training_dataset_names = ['retrieval-SfM-120k']
 test_datasets_names = ['oxford5k', 'paris6k', 'roxford5k', 'rparis6k']
@@ -362,6 +376,7 @@ def main():
     for epoch in range(start_epoch, args.epochs):
 
         # set manual seeds per epoch
+        random.seed(args.seed + epoch)
         np.random.seed(args.seed + epoch)
         torch.manual_seed(args.seed + epoch)
         torch.cuda.manual_seed_all(args.seed + epoch)

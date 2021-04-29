@@ -422,6 +422,28 @@ def main():
             'min_loss': min_loss,
             'optimizer' : optimizer.state_dict(),
         }, is_best, args.directory)
+        
+    # calculate avg_neg_distance and avg_pos_distance for one last time
+    print("Training finished. Calculating the final avg_{neg,pos}_distance...")
+
+    avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+        model,
+        batch_members=[],
+        refresh_query_selection=False,
+        refresh_query_vectors=False,
+        refresh_negative_pool=False,
+        refresh_negative_pool_vectors=False,
+        refresh_nidxs=False,
+        refresh_nidxs_vectors=False)
+        
+    if args.wandb:
+        wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, "global_step": global_step})
+
+    if args.calculate_positive_distance:
+        avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
+        
+        if args.wandb:
+            wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch, "global_step": global_step})
 
 def train(train_loader, model, criterion, optimizer, epoch):
     

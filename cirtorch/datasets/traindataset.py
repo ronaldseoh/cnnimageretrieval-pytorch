@@ -461,7 +461,7 @@ class TuplesDataset(data.Dataset):
                     # Randomly choose non-neighbors
                     nonneighbor_query_indexes = random.sample(
                         nonneighbor_queries_to_consider,
-                        k=args.dense_refresh_batch_random)
+                        k=self.dense_refresh_batch_random)
                         
                     nonneighbor_query_indexes = set(nonneighbor_query_indexes)
 

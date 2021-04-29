@@ -155,7 +155,7 @@ parser.add_argument('--dense_refresh_batch_random',
                     default=-1, type=int)
                     
 parser.add_argument('--dense_refresh_furthest_negatives_up_to',
-                    help='how many close negatives to re-embed for each query.',
+                    help='how many furthest negatives to re-embed for each query.',
                     default=-1, type=int)
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")

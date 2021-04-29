@@ -464,8 +464,11 @@ class TuplesDataset(data.Dataset):
                         k=args.dense_refresh_batch_random)
                         
                     nonneighbor_query_indexes = set(nonneighbor_query_indexes)
-                        
+
                     queries_to_embed = queries_to_embed.union(nonneighbor_query_indexes)
+                    
+                    print("Queries to embed (After selecting random non-neighbors):", str(queries_to_embed))
+                    print()
 
                 # Map the queries back to the dataset index                    
                 total_rebuild_indexes = [self.qidxs.index(q) for q in queries_to_embed]                

@@ -2,6 +2,7 @@ import os
 import pickle
 import pdb
 import copy
+import random
 
 import torch
 import torch.utils.data as data
@@ -438,23 +439,36 @@ class TuplesDataset(data.Dataset):
             if self.dense_refresh_batch_and_nearby >= 0 and len(batch_members) > 0:
                 
                 queries_to_embed = set([self.qidxs[bm] for bm in batch_members])
-                queries_to_embed_with_nearby = copy.deepcopy(queries_to_embed)
 
                 print("Queries to embed (Before searching nearby):", str(queries_to_embed))
                 print()
                 
                 if self.dense_refresh_batch_and_nearby >= 1:
+                    queries_to_embed_with_nearby = copy.deepcopy(queries_to_embed)
+
                     for bq in queries_to_embed:
                         nearby_queries = set(self.get_nearby_queries(bq, self.dense_refresh_batch_and_nearby))
                         print("Batch member", str(bq), " query neighbors:", str(nearby_queries))
                         queries_to_embed_with_nearby = queries_to_embed_with_nearby.union(nearby_queries)
-                        
-                    print("Queries to embed (After searching nearby):", str(queries_to_embed_with_nearby))
+
+                    queries_to_embed = copy.deepcopy(queries_to_embed_with_nearby)
+                    print("Queries to embed (After searching nearby):", str(queries_to_embed))
                     print()
                 
-                # Map the queries back to the dataset index
-                total_rebuild_indexes = [self.qidxs.index(q) for q in queries_to_embed_with_nearby]
-                
+                if self.dense_refresh_batch_random >= 1:
+                    nonneighbor_queries_to_consider = list(set(self.qidxs) - queries_to_embed)
+                    
+                    # Randomly choose non-neighbors
+                    nonneighbor_query_indexes = random.sample(
+                        nonneighbor_queries_to_consider,
+                        k=args.dense_refresh_batch_random)
+                        
+                    nonneighbor_query_indexes = set(nonneighbor_query_indexes)
+                        
+                    queries_to_embed = queries_to_embed.union(nonneighbor_query_indexes)
+
+                # Map the queries back to the dataset index                    
+                total_rebuild_indexes = [self.qidxs.index(q) for q in queries_to_embed]                
             else:
                 total_rebuild_indexes = [] # rebuild all
                         

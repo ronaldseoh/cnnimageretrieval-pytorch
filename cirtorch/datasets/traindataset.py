@@ -44,7 +44,7 @@ class TuplesDataset(data.Dataset):
     """
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
-                 store_nidxs_others_up_to=-1,
+                 store_nidxs_others_up_to=-1, totally_random_nidxs=False,
                  dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
                  dense_refresh_furthest_negatives_up_to=-1):
 
@@ -127,6 +127,8 @@ class TuplesDataset(data.Dataset):
         
         if self.dense_refresh_furthest_negatives_up_to > 0 and not self.store_nidxs_others_up_to > 0:
             self.store_nidxs_others_up_to = self.dense_refresh_furthest_negatives_up_to
+            
+        self.totally_random_nidxs = totally_random_nidxs
 
     def __getitem__(self, index):
         """
@@ -499,7 +501,7 @@ class TuplesDataset(data.Dataset):
 
                 # draw poolsize random images for pool of negatives images
                 self.idxs2images = torch.randperm(len(self.images))[:self.poolsize]
-
+                
                 # If pool was refreshed, refresh_negative_vector=False should be ignored
                 refresh_negative_pool_vectors = True
 
@@ -527,9 +529,12 @@ class TuplesDataset(data.Dataset):
                         save_embeds_path=save_embeds_path)
 
             print('>> Searching for hard negatives...')
-            # compute dot product scores and ranks on GPU
-            scores = torch.mm(self.poolvecs.t(), self.qvecs)
-            scores, ranks = torch.sort(scores, dim=0, descending=True)
+            
+            if not self.totally_random_nidxs:
+                # compute dot product scores and ranks on GPU
+                scores = torch.mm(self.poolvecs.t(), self.qvecs)
+                scores, ranks = torch.sort(scores, dim=0, descending=True)
+
             avg_ndist = torch.tensor(0).float().cuda()  # for statistics
             n_ndist = torch.tensor(0).float().cuda()  # for statistics
 
@@ -551,11 +556,18 @@ class TuplesDataset(data.Dataset):
 
                     r = 0
 
-                    while (len(nidxs) < self.nnum) and (r < len(ranks)):
-                        potential = self.idxs2images[ranks[r, q]]
+                    while (len(nidxs) < self.nnum):
+                        
+                        if self.totally_random_nidxs:
+                            potential = random.sample(self.idxs2images)
+                        else: 
+                            if r < len(ranks):
+                                potential = self.idxs2images[ranks[r, q]]
+                            else:
+                                break
 
                         # take at most one image from the same cluster
-                        if not self.clusters[potential] in clusters:
+                        if not self.clusters[potential] in clusters and potential not in nidxs:
                             nidxs.append(potential)
 
                             clusters.append(self.clusters[potential])

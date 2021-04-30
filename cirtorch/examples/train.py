@@ -175,6 +175,8 @@ parser.add_argument('--dense_refresh_furthest_negatives_up_to',
 parser.add_argument('--dense_refresh_defer_until_epoch',
                     help='The epoch until which we could defer the index refresh process.',
                     default=-1, type=int)
+                    
+parser.add_argument('--totally_random_nidxs', action="store_true")
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
@@ -342,6 +344,7 @@ def main():
         poolsize=args.pool_size,
         transform=transform,
         store_nidxs_others_up_to=args.store_nidxs_others_up_to,
+        totally_random_nidxs=args.totally_random_nidxs,
         dense_refresh_batch_and_nearby=args.dense_refresh_batch_and_nearby,
         dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,
         dense_refresh_batch_random=args.dense_refresh_batch_random,

@@ -553,7 +553,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                 avg_neg_distance = train_loader.dataset.create_epoch_tuples(
                     model,
                     # Randomly select any index
-                    batch_members=random.sample(range(len(train_loader.dataset), k=args.dense_refresh_total_random),
+                    batch_members=random.sample(range(len(train_loader.dataset)), k=args.dense_refresh_total_random),
                     refresh_query_selection=False,
                     refresh_query_vectors=not args.do_not_refresh_query_vectors,
                     refresh_negative_pool=False,

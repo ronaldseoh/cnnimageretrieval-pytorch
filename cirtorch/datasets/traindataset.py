@@ -558,7 +558,7 @@ class TuplesDataset(data.Dataset):
 
                     while (len(nidxs) < self.nnum):
                         if self.totally_random_nidxs:
-                            potential = random.sample(self.idxs2images, k=1)
+                            potential = self.idxs2images[random.sample(range(len(self.idxs2images)), k=1)]
                         else: 
                             if r < len(ranks):
                                 potential = self.idxs2images[ranks[r, q]]

@@ -530,7 +530,7 @@ class TuplesDataset(data.Dataset):
 
             print('>> Searching for hard negatives...')
             
-            if not self.totally_random_nidxs:
+            if not self.totally_random_nidxs and self.nnum > 0:
                 # compute dot product scores and ranks on GPU
                 scores = torch.mm(self.poolvecs.t(), self.qvecs)
                 scores, ranks = torch.sort(scores, dim=0, descending=True)

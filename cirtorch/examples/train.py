@@ -167,6 +167,10 @@ parser.add_argument('--dense_refresh_batch_multi_hop',
 parser.add_argument('--dense_refresh_batch_random',
                     help='refresh embeddings of randomly selected non-batch queries.',
                     default=-1, type=int)
+
+parser.add_argument('--dense_refresh_total_random',
+                    help='refresh embeddings of randomly selected queries, without considering each batch members.',
+                    default=-1, type=int)
                     
 parser.add_argument('--dense_refresh_furthest_negatives_up_to',
                     help='how many furthest negatives to re-embed for each query.',
@@ -545,18 +549,33 @@ def train(train_loader, model, criterion, optimizer, epoch):
            (i + 1) < len(train_loader) and \
            epoch > args.dense_refresh_defer_until_epoch:
 
-            avg_neg_distance = train_loader.dataset.create_epoch_tuples(
-                model,
-                batch_members=batch_members,
-                refresh_query_selection=False,
-                refresh_query_vectors=not args.do_not_refresh_query_vectors,
-                refresh_negative_pool=False,
-                refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
-                refresh_nidxs=not args.do_not_refresh_nidxs,
-                refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
-                save_embeds=args.save_embeds,
-                save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
-                save_embeds_path=save_embeds_dir)
+            if args.dense_refresh_total_random > 0:
+                avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+                    model,
+                    # Randomly select any index
+                    batch_members=random.sample(range(len(train_loader.dataset), k=args.dense_refresh_total_random),
+                    refresh_query_selection=False,
+                    refresh_query_vectors=not args.do_not_refresh_query_vectors,
+                    refresh_negative_pool=False,
+                    refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
+                    refresh_nidxs=not args.do_not_refresh_nidxs,
+                    refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
+                    save_embeds=args.save_embeds,
+                    save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
+                    save_embeds_path=save_embeds_dir)
+            else:
+                avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+                    model,
+                    batch_members=batch_members,
+                    refresh_query_selection=False,
+                    refresh_query_vectors=not args.do_not_refresh_query_vectors,
+                    refresh_negative_pool=False,
+                    refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
+                    refresh_nidxs=not args.do_not_refresh_nidxs,
+                    refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
+                    save_embeds=args.save_embeds,
+                    save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
+                    save_embeds_path=save_embeds_dir)
             
             if args.wandb:
                 wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'global_step': global_step})

@@ -578,7 +578,7 @@ class TuplesDataset(data.Dataset):
                             avg_ndist += torch.pow(self.qvecs[:,q]-self.poolvecs[:, potential_index]+1e-6, 2).sum(dim=0).sqrt()
                             n_ndist += 1
 
-                        if self.totally_random_nidxs:
+                        if not self.totally_random_nidxs:
                             r += 1
 
                     self.nidxs.append(nidxs)
@@ -633,7 +633,7 @@ class TuplesDataset(data.Dataset):
 
                             clusters.append(self.clusters[potential])
 
-                        if self.totally_random_nidxs_others or self.totally_random_nidxs:
+                        if not (self.totally_random_nidxs_others or self.totally_random_nidxs):
                             r_others -= 1
 
                     self.nidxs_others.append(nidxs_others)

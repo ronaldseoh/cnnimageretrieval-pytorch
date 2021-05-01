@@ -189,12 +189,11 @@ parser.add_argument('--do_not_refresh_query_vectors', action="store_true")
 
 parser.add_argument('--do_not_refresh_nidxs_vectors', action="store_true")
 
-parser.add_argument('--do_not_refresh_nidxs_others_vectors', action="store_true")
+parser.add_argument('--do_not_refresh_nidxs_others_vectors', action="store_false")
 
 parser.add_argument('--do_not_refresh_nidxs', action="store_true")
 
-parser.add_argument('--do_not_refresh_nidxs_others', action="store_true")
-
+parser.add_argument('--do_not_refresh_nidxs_others', action="store_false")
 
 min_loss = float('inf')
 

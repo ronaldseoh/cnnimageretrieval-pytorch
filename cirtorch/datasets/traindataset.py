@@ -254,6 +254,7 @@ class TuplesDataset(data.Dataset):
             
     def extract_negative_pool_vectors(self, net, target_data_idxs=[],
                                       refresh_nidxs_vectors=True,
+                                      refresh_nidxs_others_vectors=False,
                                       save_embeds=False,
                                       save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                                       save_embeds_path=''):
@@ -274,7 +275,7 @@ class TuplesDataset(data.Dataset):
                 idxs2images = set()
 
                 for idx in target_data_idxs:
-                    if self.dense_refresh_furthest_negatives_up_to > 0:
+                    if refresh_nidxs_others_vectors:
                         idxs2images = idxs2images.union(set([im_index.item() for im_index in self.nidxs_others[idx]]))
 
                     if refresh_nidxs_vectors:
@@ -407,6 +408,8 @@ class TuplesDataset(data.Dataset):
                             refresh_negative_pool_vectors=True,
                             refresh_nidxs=True,
                             refresh_nidxs_vectors=True,
+                            refresh_nidxs_others=False,
+                            refresh_nidxs_others_vectors=False,
                             save_embeds=False,
                             save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
                             save_embeds_path=''):
@@ -512,6 +515,7 @@ class TuplesDataset(data.Dataset):
                         net,
                         target_data_idxs=[], # Rebuild all when the negative pool was refreshed
                         refresh_nidxs_vectors=refresh_nidxs_vectors,
+                        refresh_nidxs_others_vectors=refresh_nidxs_others_vectors,
                         save_embeds=save_embeds,
                         save_embeds_epoch=save_embeds_epoch,
                         save_embeds_step=save_embeds_step,
@@ -522,6 +526,7 @@ class TuplesDataset(data.Dataset):
                         net,
                         target_data_idxs=total_rebuild_indexes,
                         refresh_nidxs_vectors=refresh_nidxs_vectors,
+                        refresh_nidxs_others_vectors=refresh_nidxs_others_vectors,
                         save_embeds=save_embeds,
                         save_embeds_epoch=save_embeds_epoch,
                         save_embeds_step=save_embeds_step,

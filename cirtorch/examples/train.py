@@ -443,7 +443,7 @@ def main():
     # calculate avg_neg_distance and avg_pos_distance for one last time
     print("Training finished. Calculating the final avg_{neg,pos}_distance...")
 
-    avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+    avg_neg_distance, _ = train_loader.dataset.create_epoch_tuples(
         model,
         batch_members=[],
         refresh_query_selection=False,
@@ -478,7 +478,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         save_embeds_dir = ''
 
     # create tuples for training
-    avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+    avg_neg_distance, num_negatives_reembedded = train_loader.dataset.create_epoch_tuples(
         model,
         save_embeds=args.save_embeds,
         save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
@@ -486,6 +486,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
         
     if args.wandb:
         wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch-1, "global_step": global_step})
+        wandb.log({"num_negatives_reembedded": num_negatives_reembedded, 'epoch': epoch-1, "global_step": global_step})
 
     if args.calculate_positive_distance:
         avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()
@@ -561,7 +562,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
             else:
                 dataset_index_to_refresh = batch_members
 
-            avg_neg_distance = train_loader.dataset.create_epoch_tuples(
+            avg_neg_distance, num_negatives_reembedded = train_loader.dataset.create_epoch_tuples(
                 model,
                 batch_members=dataset_index_to_refresh,
                 refresh_query_selection=False,
@@ -578,6 +579,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
             
             if args.wandb:
                 wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'global_step': global_step})
+                wandb.log({"num_negatives_reembedded": num_negatives_reembedded, 'epoch': epoch, 'global_step': global_step})
             
             if args.calculate_positive_distance:
                 avg_pos_distance = train_loader.dataset.calculate_average_positive_distance()

@@ -334,6 +334,9 @@ class TuplesDataset(data.Dataset):
             net.train()
             net.apply(set_batchnorm_eval)
             
+        # Return how many images were actually reembedded
+        return len(idxs2images)
+            
     def extract_positive_vectors(self, net, target_data_idxs=[],
                                  save_embeds=False,
                                  save_embeds_epoch=-1, save_embeds_step=-1, save_embeds_total_steps=-1,
@@ -507,9 +510,11 @@ class TuplesDataset(data.Dataset):
                 refresh_negative_pool_vectors = True
 
             # extract negative pool vectors
+            num_negatives_reembedded = 0
+            
             if refresh_negative_pool_vectors:
                 if refresh_negative_pool:
-                    self.extract_negative_pool_vectors(
+                    num_negatives_reembedded = self.extract_negative_pool_vectors(
                         net,
                         target_data_idxs=[], # Rebuild all when the negative pool was refreshed
                         refresh_nidxs_vectors=refresh_nidxs_vectors,
@@ -520,7 +525,7 @@ class TuplesDataset(data.Dataset):
                         save_embeds_total_steps=save_embeds_total_steps,
                         save_embeds_path=save_embeds_path)
                 else:
-                    self.extract_negative_pool_vectors(
+                    num_negatives_reembedded = self.extract_negative_pool_vectors(
                         net,
                         target_data_idxs=total_rebuild_indexes,
                         refresh_nidxs_vectors=refresh_nidxs_vectors,
@@ -672,7 +677,9 @@ class TuplesDataset(data.Dataset):
                 net.train()
                 net.apply(set_batchnorm_eval)
 
-            return (avg_ndist/n_ndist).item()  # return average negative l2-distance
+            # return average negative l2-distance
+            # return the # of negative pool vectors re-embedded
+            return (avg_ndist/n_ndist).item(), num_negatives_reembedded
 
     def calculate_average_positive_distance(self):
             

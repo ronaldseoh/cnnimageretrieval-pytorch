@@ -149,6 +149,9 @@ parser.add_argument('--save_embeds', action="store_true")
 
 parser.add_argument('--store_nidxs_others_up_to', default=0, type=int, metavar='N',
                     help='how large nidxs_others should be for each query.')
+                    
+parser.add_argument('--store_nidxs_others_order_by', default='ascending', type=str, metavar='ORDER_BY',
+                    help='how to sort nidxs_others.')
 
 parser.add_argument('--calculate_positive_distance', action="store_true")
 
@@ -172,15 +175,12 @@ parser.add_argument('--dense_refresh_total_random',
                     help='refresh embeddings of randomly selected queries, without considering each batch members.',
                     default=-1, type=int)
                     
-parser.add_argument('--dense_refresh_furthest_negatives_up_to',
-                    help='how many furthest negatives to re-embed for each query.',
-                    default=-1, type=int)
-                    
 parser.add_argument('--dense_refresh_defer_until_epoch',
                     help='The epoch until which we could defer the index refresh process.',
                     default=-1, type=int)
                     
 parser.add_argument('--totally_random_nidxs', action="store_true")
+parser.add_argument('--totally_random_nidxs_others', action="store_true")
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
@@ -348,7 +348,9 @@ def main():
         poolsize=args.pool_size,
         transform=transform,
         store_nidxs_others_up_to=args.store_nidxs_others_up_to,
+        store_nidxs_others_order_by=args.store_nidxs_others_order_by,
         totally_random_nidxs=args.totally_random_nidxs,
+        totally_random_nidxs_others=args.totally_random_nidxs_others,
         dense_refresh_batch_and_nearby=args.dense_refresh_batch_and_nearby,
         dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,
         dense_refresh_batch_random=args.dense_refresh_batch_random,

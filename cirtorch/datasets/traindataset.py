@@ -593,7 +593,7 @@ class TuplesDataset(data.Dataset):
 
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
-                if refresh_negative_pool or refresh_nidxs_others:
+                if self.store_nidxs_others_up_to > 0 and (refresh_negative_pool or refresh_nidxs_others):
 
                     nidxs_others = []
                     

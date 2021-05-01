@@ -180,6 +180,7 @@ parser.add_argument('--dense_refresh_defer_until_epoch',
                     default=-1, type=int)
                     
 parser.add_argument('--totally_random_nidxs', action="store_true")
+
 parser.add_argument('--totally_random_nidxs_others', action="store_true")
 
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
@@ -187,6 +188,8 @@ parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 parser.add_argument('--do_not_refresh_query_vectors', action="store_true")
 
 parser.add_argument('--do_not_refresh_nidxs_vectors', action="store_true")
+
+parser.add_argument('--do_not_refresh_nidxs_others_vectors', action="store_true")
 
 parser.add_argument('--do_not_refresh_nidxs', action="store_true")
 
@@ -354,7 +357,6 @@ def main():
         dense_refresh_batch_and_nearby=args.dense_refresh_batch_and_nearby,
         dense_refresh_batch_multi_hop=args.dense_refresh_batch_multi_hop,
         dense_refresh_batch_random=args.dense_refresh_batch_random,
-        dense_refresh_furthest_negatives_up_to=args.dense_refresh_furthest_negatives_up_to,
     )
 
     train_loader = torch.utils.data.DataLoader(
@@ -562,6 +564,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
                     refresh_nidxs=not args.do_not_refresh_nidxs,
                     refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
+                    refresh_nidxs_others=not args.do_not_refresh_nidxs_others,
+                    refresh_nidxs_others_vectors=not args.do_not_refresh_nidxs_others_vectors,
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)
@@ -575,6 +579,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
                     refresh_negative_pool_vectors=not args.do_not_refresh_negative_vectors,
                     refresh_nidxs=not args.do_not_refresh_nidxs,
                     refresh_nidxs_vectors=not args.do_not_refresh_nidxs_vectors,
+                    refresh_nidxs_others=not args.do_not_refresh_nidxs_others,
+                    refresh_nidxs_others_vectors=not args.do_not_refresh_nidxs_others_vectors,
                     save_embeds=args.save_embeds,
                     save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                     save_embeds_path=save_embeds_dir)

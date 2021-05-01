@@ -46,8 +46,7 @@ class TuplesDataset(data.Dataset):
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
                  store_nidxs_others_up_to=-1, store_nidxs_others_order_by='ascending',
                  totally_random_nidxs=False, totally_random_nidxs_others=False,
-                 dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
-                 dense_refresh_furthest_negatives_up_to=-1):
+                 dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1):
 
         if not (mode == 'train' or mode == 'val'):
             raise(RuntimeError("MODE should be either train or val, passed as string"))
@@ -125,10 +124,6 @@ class TuplesDataset(data.Dataset):
         self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
         self.dense_refresh_batch_random = dense_refresh_batch_random
-        self.dense_refresh_furthest_negatives_up_to = dense_refresh_furthest_negatives_up_to
-        
-        if self.dense_refresh_furthest_negatives_up_to > 0 and not self.store_nidxs_others_up_to > 0:
-            self.store_nidxs_others_up_to = self.dense_refresh_furthest_negatives_up_to
             
         self.totally_random_nidxs = totally_random_nidxs
         self.totally_random_nidxs_others = totally_random_nidxs_others

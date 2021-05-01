@@ -44,7 +44,8 @@ class TuplesDataset(data.Dataset):
     """
 
     def __init__(self, name, mode, imsize=None, nnum=5, qsize=2000, poolsize=20000, transform=None, loader=default_loader,
-                 store_nidxs_others_up_to=-1, totally_random_nidxs=False,
+                 store_nidxs_others_up_to=-1, store_nidxs_others_order_by='ascending',
+                 totally_random_nidxs=False, totally_random_nidxs_others=False,
                  dense_refresh_batch_and_nearby=-1, dense_refresh_batch_multi_hop=-1, dense_refresh_batch_random=-1,
                  dense_refresh_furthest_negatives_up_to=-1):
 
@@ -119,6 +120,7 @@ class TuplesDataset(data.Dataset):
         self.pvecs = None
 
         self.store_nidxs_others_up_to = store_nidxs_others_up_to
+        self.store_nidxs_others_order_by = store_nidxs_others_order_by
 
         self.dense_refresh_batch_and_nearby = dense_refresh_batch_and_nearby
         self.dense_refresh_batch_multi_hop = dense_refresh_batch_multi_hop
@@ -129,6 +131,7 @@ class TuplesDataset(data.Dataset):
             self.store_nidxs_others_up_to = self.dense_refresh_furthest_negatives_up_to
             
         self.totally_random_nidxs = totally_random_nidxs
+        self.totally_random_nidxs_others = totally_random_nidxs_others
 
     def __getitem__(self, index):
         """
@@ -547,7 +550,7 @@ class TuplesDataset(data.Dataset):
             if refresh_negative_pool or refresh_nidxs:
                 self.nidxs = []
             
-            if self.store_nidxs_others_up_to > 0:
+            if refresh_negative_pool or refresh_nidxs_others:
                 self.nidxs_others = []
 
             for q in range(len(self.qidxs)):
@@ -561,7 +564,7 @@ class TuplesDataset(data.Dataset):
 
                     r = 0
 
-                    while (len(nidxs) < self.nnum):
+                    while len(nidxs) < self.nnum:
                         if self.totally_random_nidxs:
                             potential_index = random.sample(range(len(self.idxs2images)), k=1)[0]
                         else: 
@@ -580,7 +583,8 @@ class TuplesDataset(data.Dataset):
                             avg_ndist += torch.pow(self.qvecs[:,q]-self.poolvecs[:, potential_index]+1e-6, 2).sum(dim=0).sqrt()
                             n_ndist += 1
 
-                        r += 1
+                        if self.totally_random_nidxs:
+                            r += 1
 
                     self.nidxs.append(nidxs)
                 else:
@@ -594,16 +598,39 @@ class TuplesDataset(data.Dataset):
 
                 # while the original nidxs ends here, save the rest in `ranks`
                 # to nidxs_others
-                if self.store_nidxs_others_up_to > 0:
-                    nidxs_others = []
+                if refresh_negative_pool or refresh_nidxs_others:
 
-                    r_others = len(ranks) - 1 # Start from the back
+                    nidxs_others = []
+                    
+                    if self.store_nidxs_others_order_by == 'descending':
+                        r_others = len(ranks) - 1 # Start from the back
+                        r_others_limit = r
+                    elif self.store_nidxs_others_order_by == 'ascending':
+                        r_others = r # Start from where nidxs ended.
+                        r_others_limit = len(ranks) - 1
 
                     qcluster = self.clusters[self.qidxs[q]]
                     clusters = [qcluster]
+                    
+                    # We need to rule out images that are already in nidxs[q]
+                    # If nidxs was filled with random choices, we have to fill
+                    # nidxs_others with random choices as well
+                    if self.totally_random_nidxs_others or self.totally_random_nidxs:
+                        nidxs_q_idx2images_indexes = [torch.nonzero(self.idxs2images == im_index, as_tuple=False).squeeze().item() for im_index in self.nidxs[q]]
 
-                    while (len(nidxs_others) <= self.store_nidxs_others_up_to) and (r_others >= 0):
-                        potential = self.idxs2images[ranks[r_others, q]]
+                        nidxs_others_candidates = set(range(len(self.idxs2images))) - set(nidxs_q_idx2images_indexes)
+
+                    while len(nidxs_others) <= self.store_nidxs_others_up_to:
+                        if self.totally_random_nidxs_others or self.totally_random_nidxs:
+                            potential_index = random.sample(nidxs_others_candidates, k=1)[0]
+                        else:
+                            if (self.store_nidxs_others_order_by == 'descending' and r_others < r_others_limit) \
+                               or (self.store_nidxs_others_order_by == 'ascending' and r_others > r_others_limit):
+                                break
+
+                            potential_index = ranks[r_others, q]
+                                
+                        potential = self.idxs2images[potential_index]
 
                         # take at most one image from the same cluster
                         if not self.clusters[potential] in clusters:
@@ -611,7 +638,8 @@ class TuplesDataset(data.Dataset):
 
                             clusters.append(self.clusters[potential])
 
-                        r_others -= 1
+                        if self.totally_random_nidxs_others or self.totally_random_nidxs:
+                            r_others -= 1
 
                     self.nidxs_others.append(nidxs_others)
                 

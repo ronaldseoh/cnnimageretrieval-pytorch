@@ -622,7 +622,7 @@ def validate(val_loader, model, criterion, epoch):
     losses = AverageMeter()
 
     # create tuples for validation
-    avg_neg_distance = val_loader.dataset.create_epoch_tuples(model)
+    avg_neg_distance, _ = val_loader.dataset.create_epoch_tuples(model)
     
     if args.wandb:
         wandb.log({"avg_neg_distance_validation": avg_neg_distance, 'epoch': epoch, "global_step": global_step})

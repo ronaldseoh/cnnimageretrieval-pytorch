@@ -348,13 +348,24 @@ def main():
         transforms.ToTensor(),
         normalize,
     ])
+    
+    if args.query_size == -1:
+        train_query_size = float('Inf')
+    else:
+        train_query_size = args.query_size
+        
+    if args.pool_size == -1:
+        train_pool_size = float('Inf')
+    else:
+        train_pool_size = args.pool_size
+    
     train_dataset = TuplesDataset(
         name=args.training_dataset,
         mode='train',
         imsize=args.image_size,
         nnum=args.neg_num,
-        qsize=args.query_size,
-        poolsize=args.pool_size,
+        qsize=train_query_size,
+        poolsize=train_pool_size,
         transform=transform,
         store_nidxs_others_up_to=args.store_nidxs_others_up_to,
         store_nidxs_others_order_by=args.store_nidxs_others_order_by,

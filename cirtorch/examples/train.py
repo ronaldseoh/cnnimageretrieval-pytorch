@@ -516,7 +516,7 @@ def train(train_loader, model, criterion, optimizer, epoch, indexes_to_refresh):
         batch_members = []
     else:
         # If the full refresh hasn't been done yet, start with the given list
-        batch_members = initial_index_to_refresh
+        batch_members = indexes_to_refresh
             
         if args.wandb:
             wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch-1, "global_step": global_step})

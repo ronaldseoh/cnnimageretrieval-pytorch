@@ -187,6 +187,8 @@ parser.add_argument('--totally_random_nidxs', action="store_true")
 
 parser.add_argument('--totally_random_nidxs_others', action="store_true")
 
+parser.add_argument('--full_refresh_only_encountered_examples', action="store_false")
+
 parser.add_argument('--do_not_refresh_negative_vectors', action="store_true")
 
 parser.add_argument('--do_not_refresh_query_vectors', action="store_true")
@@ -404,6 +406,8 @@ def main():
     # evaluate the network before starting
     # this might not be necessary?
     test(args.test_datasets, model, wandb_enabled=args.wandb, epoch=-1)
+    
+    indexes_to_refresh = []
 
     for epoch in range(start_epoch, args.epochs):
 
@@ -414,7 +418,7 @@ def main():
         torch.cuda.manual_seed_all(args.seed + epoch)
 
         # train for one epoch on train set
-        loss = train(train_loader, model, criterion, optimizer, epoch)
+        loss, indexes_to_refresh = train(train_loader, model, criterion, optimizer, epoch, indexes_to_refresh)
         
         if args.wandb:
             wandb.log({"loss_avg": loss, "epoch": epoch, "global_step": global_step}) ## This is average loss
@@ -477,7 +481,7 @@ def main():
         if args.wandb:
             wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch, "global_step": global_step})
 
-def train(train_loader, model, criterion, optimizer, epoch):
+def train(train_loader, model, criterion, optimizer, epoch, indexes_to_refresh):
     
     global global_step
 
@@ -494,11 +498,25 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
     # create tuples for training
     if epoch % args.full_refresh_interval == 0:
-        avg_neg_distance, num_negatives_reembedded = train_loader.dataset.create_epoch_tuples(
-            model,
-            save_embeds=args.save_embeds,
-            save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
-            save_embeds_path=save_embeds_dir)
+        if args.full_refresh_only_encountered_examples:
+            avg_neg_distance, num_negatives_reembedded = train_loader.dataset.create_epoch_tuples(
+                model,
+                batch_members=indexes_to_refresh, # This will be provided by previous epochs
+                save_embeds=args.save_embeds,
+                save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
+                save_embeds_path=save_embeds_dir)
+        else:
+            avg_neg_distance, num_negatives_reembedded = train_loader.dataset.create_epoch_tuples(
+                model,
+                save_embeds=args.save_embeds,
+                save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
+                save_embeds_path=save_embeds_dir)
+                
+        # Start with the empty list of indexes to refresh
+        batch_members = []
+    else:
+        # If the full refresh hasn't been done yet, start with the given list
+        batch_members = initial_index_to_refresh
             
         if args.wandb:
             wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch-1, "global_step": global_step})
@@ -518,9 +536,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
     optimizer.zero_grad()
 
     end = time.time()
-    
-    # Record indexes of batch members
-    batch_members = []
     
     for i, data in enumerate(train_loader):
         images, target, index = data
@@ -554,7 +569,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
             wandb.log({"loss": losses.val, 'epoch': epoch, 'global_step': global_step})
             
         # record which queries were in the batch
-        batch_members = index
+        for idx in index:
+            batch_members.append(idx)
 
         if (i + 1) % args.update_every == 0:
             # do one step for multiple batches
@@ -592,6 +608,9 @@ def train(train_loader, model, criterion, optimizer, epoch):
                 save_embeds=args.save_embeds,
                 save_embeds_epoch=epoch, save_embeds_step=i, save_embeds_total_steps=len(train_loader)-1,
                 save_embeds_path=save_embeds_dir)
+                
+            # Reset batch_members once the refresh is complete
+            batch_members = []
             
             if args.wandb:
                 wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch, 'global_step': global_step})
@@ -614,7 +633,6 @@ def train(train_loader, model, criterion, optimizer, epoch):
                 ">>>>> Epoch {} Step {}/{} batch member serialization complete!".format(epoch, i, len(train_loader)-1))
                 
             print()
-                
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -628,7 +646,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                    epoch+1, i+1, len(train_loader), global_step, batch_time=batch_time,
                    data_time=data_time, loss=losses))
 
-    return losses.avg
+    return losses.avg, batch_members
 
 
 def validate(val_loader, model, criterion, epoch):

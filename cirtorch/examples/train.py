@@ -511,13 +511,7 @@ def train(train_loader, model, criterion, optimizer, epoch, indexes_to_refresh):
                 save_embeds=args.save_embeds,
                 save_embeds_epoch=epoch, save_embeds_step=-1, save_embeds_total_steps=len(train_loader)-1,
                 save_embeds_path=save_embeds_dir)
-                
-        # Start with the empty list of indexes to refresh
-        batch_members = []
-    else:
-        # If the full refresh hasn't been done yet, start with the given list
-        batch_members = indexes_to_refresh
-            
+
         if args.wandb:
             wandb.log({"avg_neg_distance": avg_neg_distance, 'epoch': epoch-1, "global_step": global_step})
             wandb.log({"num_negatives_reembedded": num_negatives_reembedded, 'epoch': epoch-1, "global_step": global_step})
@@ -527,6 +521,12 @@ def train(train_loader, model, criterion, optimizer, epoch, indexes_to_refresh):
             
             if args.wandb:
                 wandb.log({"avg_pos_distance": avg_pos_distance, 'epoch': epoch-1, "global_step": global_step})
+
+        # Start with the empty list of indexes to refresh
+        batch_members = []
+    else:
+        # If the full refresh hasn't been done yet, start with the given list
+        batch_members = indexes_to_refresh
 
     # switch to train mode
     model.train()
